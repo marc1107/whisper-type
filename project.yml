@@ -1,0 +1,68 @@
+name: WhisperType
+options:
+  bundleIdPrefix: com.whispertype
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  minimumXcodeGenVersion: "2.38"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+targets:
+  WhisperType:
+    type: application
+    platform: macOS
+    sources:
+      - path: WhisperType
+        excludes:
+          - "**/*.plist"
+          - "**/*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.whispertype.app
+        INFOPLIST_FILE: WhisperType/Info.plist
+        CODE_SIGN_ENTITLEMENTS: WhisperType/WhisperType.entitlements
+        LS_UI_ELEMENT: YES
+        HEADER_SEARCH_PATHS:
+          - "$(SRCROOT)/whisper.cpp/include"
+          - "$(SRCROOT)/whisper.cpp/ggml/include"
+        LIBRARY_SEARCH_PATHS:
+          - "$(SRCROOT)/whisper.cpp/build/src"
+          - "$(SRCROOT)/whisper.cpp/build/ggml/src"
+          - "$(SRCROOT)/whisper.cpp/build/ggml/src/ggml-metal"
+          - "$(SRCROOT)/whisper.cpp/build/ggml/src/ggml-blas"
+        OTHER_LDFLAGS:
+          - "-lwhisper"
+          - "-lggml"
+          - "-lggml-base"
+          - "-lggml-cpu"
+          - "-lggml-metal"
+          - "-lggml-blas"
+          - "-lstdc++"
+          - "-framework Accelerate"
+          - "-framework Metal"
+          - "-framework MetalKit"
+          - "-framework Foundation"
+        SWIFT_OBJC_BRIDGING_HEADER: "WhisperType/BridgingHeader.h"
+        ENABLE_APP_SANDBOX: NO
+        CODE_SIGN_IDENTITY: "-"
+        PRODUCT_NAME: WhisperType
+    dependencies: []
+
+  WhisperTypeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: WhisperTypeTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.whispertype.tests
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS:
+          - "$(SRCROOT)/whisper.cpp/include"
+          - "$(SRCROOT)/whisper.cpp/ggml/include"
+    dependencies:
+      - target: WhisperType

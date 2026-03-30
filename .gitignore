@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.moved-aside
+xcuserdata/
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+# Whisper Models (too large for git)
+Models/*.bin
+Models/*.mlmodel
+*.ggml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# whisper.cpp build artifacts
+whisper.cpp/build/
+
+# Generated Xcode project
+WhisperType.xcodeproj/
+
+# Misc
+*.log
+*.tmp
