@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build whisper.cpp
+        run: |
+          cd whisper.cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWHISPER_METAL=ON -DWHISPER_COREML=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
+          cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Run tests
+        run: |
+          xcodebuild \
+            -project WhisperType.xcodeproj \
+            -scheme WhisperTypeTests \
+            -destination 'platform=macOS' \
+            test
+
+  build:
+    name: Build
+    runs-on: macos-14
+    needs: test
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build whisper.cpp
+        run: |
+          cd whisper.cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWHISPER_METAL=ON -DWHISPER_COREML=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
+          cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build Release
+        env:
+          BUILD_DIR: build/Release
+        run: |
+          xcodebuild \
+            -project WhisperType.xcodeproj \
+            -scheme WhisperType \
+            -configuration Release \
+            build \
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/$BUILD_DIR"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhisperType.app
+          path: build/Release/WhisperType.app

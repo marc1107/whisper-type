@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Create DMG
+    runs-on: macos-14
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Install tools
+        run: brew install xcodegen create-dmg
+
+      - name: Build whisper.cpp
+        run: |
+          cd whisper.cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWHISPER_METAL=ON -DWHISPER_COREML=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
+          cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build Release
+        run: |
+          xcodebuild \
+            -project WhisperType.xcodeproj \
+            -scheme WhisperType \
+            -configuration Release \
+            build \
+            CONFIGURATION_BUILD_DIR="$GITHUB_WORKSPACE/build/Release"
+
+      - name: Create DMG
+        run: |
+          DMG_NAME="WhisperType-${RELEASE_TAG}-arm64.dmg"
+          create-dmg \
+            --volname "WhisperType" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "WhisperType.app" 175 190 \
+            --hide-extension "WhisperType.app" \
+            --app-drop-link 425 190 \
+            --no-internet-enable \
+            "$DMG_NAME" \
+            "build/Release/WhisperType.app" \
+          || true
+          # create-dmg returns non-zero even on success sometimes; verify file exists
+          ls -la "$DMG_NAME"
+
+      - name: Generate SHA256
+        run: |
+          DMG_NAME="WhisperType-${RELEASE_TAG}-arm64.dmg"
+          shasum -a 256 "$DMG_NAME" | tee "${DMG_NAME}.sha256"
+
+      - name: Upload DMG to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DMG_NAME="WhisperType-${RELEASE_TAG}-arm64.dmg"
+          gh release upload "$RELEASE_TAG" "$DMG_NAME" "${DMG_NAME}.sha256" --clobber

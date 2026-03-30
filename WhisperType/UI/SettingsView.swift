@@ -1,3 +1,4 @@
+import AVFoundation
 import ServiceManagement
 import SwiftUI
 
@@ -23,6 +24,10 @@ struct SettingsView: View {
 
 struct GeneralSettingsTab: View {
     @ObservedObject var settings: AppSettings
+    @State private var accessibilityGranted = AXIsProcessTrusted()
+    @State private var microphoneGranted = false
+
+    let permissionTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     var body: some View {
         Form {
@@ -48,15 +53,29 @@ struct GeneralSettingsTab: View {
                 }
             }
 
-            Section("Bedienungshilfen") {
+            Section("Berechtigungen") {
                 HStack {
-                    Image(systemName: AXIsProcessTrusted() ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(AXIsProcessTrusted() ? .green : .red)
-                    Text(AXIsProcessTrusted() ? "Berechtigung erteilt" : "Berechtigung fehlt")
+                    Image(systemName: accessibilityGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(accessibilityGranted ? .green : .red)
+                    Text("Bedienungshilfen: \(accessibilityGranted ? "Erteilt" : "Fehlt")")
                     Spacer()
-                    if !AXIsProcessTrusted() {
-                        Button("Einstellungen öffnen") {
+                    if !accessibilityGranted {
+                        Button("Öffnen") {
                             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                    }
+                }
+
+                HStack {
+                    Image(systemName: microphoneGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(microphoneGranted ? .green : .red)
+                    Text("Mikrofon: \(microphoneGranted ? "Erteilt" : "Fehlt")")
+                    Spacer()
+                    if !microphoneGranted {
+                        Button("Öffnen") {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
                                 NSWorkspace.shared.open(url)
                             }
                         }
@@ -66,6 +85,18 @@ struct GeneralSettingsTab: View {
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear { checkPermissions() }
+        .onReceive(permissionTimer) { _ in checkPermissions() }
+    }
+
+    private func checkPermissions() {
+        accessibilityGranted = AXIsProcessTrusted()
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            microphoneGranted = true
+        default:
+            microphoneGranted = false
+        }
     }
 }
 
@@ -77,11 +108,7 @@ struct HotkeySettingsTab: View {
     var body: some View {
         Form {
             Section("Tastenkombination") {
-                Text("Aktuell: Option + D")
-                    .font(.headline)
-                Text("Tastenkombination kann in einer zukünftigen Version angepasst werden.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                HotkeyRecorderView(settings: settings)
             }
 
             Section("Modus") {
@@ -134,26 +161,47 @@ struct TranscriptionSettingsTab: View {
                     }
                 }
 
-                if !settings.isModelDownloaded(settings.selectedModel) {
+                if appState.modelManager.isDownloading {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            ProgressView(value: appState.modelManager.downloadProgress)
+                                .progressViewStyle(.linear)
+                            Text("\(Int(appState.modelManager.downloadProgress * 100))%")
+                                .font(.caption)
+                                .monospacedDigit()
+                                .frame(width: 40, alignment: .trailing)
+                        }
+                        Button("Abbrechen") {
+                            appState.modelManager.cancelDownload()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                } else if !settings.isModelDownloaded(settings.selectedModel) {
                     Button("Modell herunterladen") {
                         Task {
                             try? await appState.modelManager.downloadModel(settings.selectedModel)
                             await appState.loadSelectedModel()
                         }
                     }
-
-                    if appState.modelManager.isDownloading {
-                        ProgressView(value: appState.modelManager.downloadProgress)
-                            .progressViewStyle(.linear)
-                    }
                 } else {
                     HStack {
-                        Button("Modell neu laden") {
-                            Task { await appState.loadSelectedModel() }
+                        if appState.isModelLoaded && settings.selectedModel == settings.selectedModel {
+                            Label("Geladen", systemImage: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.caption)
+                        } else {
+                            Button("Modell laden") {
+                                Task { await appState.loadSelectedModel() }
+                            }
                         }
-                        Button("Modell löschen", role: .destructive) {
+                        Spacer()
+                        Button("Löschen", role: .destructive) {
                             try? appState.modelManager.deleteModel(settings.selectedModel)
+                            appState.isModelLoaded = false
                         }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                     }
                 }
             }

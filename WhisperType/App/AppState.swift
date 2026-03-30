@@ -14,6 +14,7 @@ enum AppStatus: Equatable {
 final class AppState: ObservableObject {
     @Published var status: AppStatus = .idle
     @Published var lastTranscription: String = ""
+    @Published var isModelLoaded: Bool = false
 
     let settings = AppSettings.shared
     let audioRecorder = AudioRecorder()
@@ -66,11 +67,16 @@ final class AppState: ObservableObject {
 
     func loadSelectedModel() async {
         let model = settings.selectedModel
-        guard settings.isModelDownloaded(model) else { return }
+        guard settings.isModelDownloaded(model) else {
+            isModelLoaded = false
+            return
+        }
         let path = settings.modelPath(for: model).path
         do {
             try whisperEngine.loadModel(at: path)
+            isModelLoaded = true
         } catch {
+            isModelLoaded = false
             setError(error.localizedDescription)
         }
     }
@@ -100,7 +106,7 @@ final class AppState: ObservableObject {
             return false
         }() else { return }
 
-        guard whisperEngine.isModelLoaded else {
+        guard isModelLoaded else {
             setError("Kein Whisper-Modell geladen. Bitte zuerst ein Modell herunterladen.")
             return
         }

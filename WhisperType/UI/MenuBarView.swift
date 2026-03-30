@@ -14,27 +14,26 @@ struct MenuBarView: View {
                     .font(.headline)
             }
 
-            if !appState.whisperEngine.isModelLoaded {
+            if appState.modelManager.isDownloading {
                 Divider()
-                if appState.modelManager.isDownloading {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Lade Modell herunter...")
-                            .font(.caption)
-                        ProgressView(value: appState.modelManager.downloadProgress)
-                            .progressViewStyle(.linear)
-                        Text("\(Int(appState.modelManager.downloadProgress * 100))%")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                } else {
-                    Button("Modell herunterladen (\(appState.settings.selectedModel.displayName))") {
-                        Task {
-                            do {
-                                try await appState.modelManager.downloadModel(appState.settings.selectedModel)
-                                await appState.loadSelectedModel()
-                            } catch {
-                                // Error shown via model manager
-                            }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Lade \(appState.settings.selectedModel.displayName)...")
+                        .font(.caption)
+                    ProgressView(value: appState.modelManager.downloadProgress)
+                        .progressViewStyle(.linear)
+                    Text("\(Int(appState.modelManager.downloadProgress * 100))%")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            } else if !appState.isModelLoaded {
+                Divider()
+                Button("Modell herunterladen (\(appState.settings.selectedModel.displayName))") {
+                    Task {
+                        do {
+                            try await appState.modelManager.downloadModel(appState.settings.selectedModel)
+                            await appState.loadSelectedModel()
+                        } catch {
+                            // Error shown via status
                         }
                     }
                 }
@@ -70,7 +69,10 @@ struct MenuBarView: View {
     private var statusText: String {
         switch appState.status {
         case .idle:
-            return appState.whisperEngine.isModelLoaded ? "Bereit" : "Kein Modell geladen"
+            if appState.modelManager.isDownloading {
+                return "Lade Modell..."
+            }
+            return appState.isModelLoaded ? "Bereit" : "Kein Modell geladen"
         case .recording: return "Aufnahme..."
         case .transcribing: return "Transkribiere..."
         case .injecting: return "Füge ein..."
@@ -80,7 +82,9 @@ struct MenuBarView: View {
 
     private var statusColor: Color {
         switch appState.status {
-        case .idle: return appState.whisperEngine.isModelLoaded ? .green : .orange
+        case .idle:
+            if appState.modelManager.isDownloading { return .orange }
+            return appState.isModelLoaded ? .green : .orange
         case .recording: return .red
         case .transcribing: return .orange
         case .injecting: return .blue

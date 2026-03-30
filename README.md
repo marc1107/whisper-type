@@ -19,23 +19,37 @@ Lokale Sprache-zu-Text Diktierfunktion für macOS – komplett offline, powered 
 
 ## Installation
 
+### DMG Download (empfohlen)
+
+1. Lade die neueste Version von der [Releases-Seite](../../releases/latest) herunter
+2. Öffne die `.dmg` Datei
+3. Ziehe WhisperType in den Programme-Ordner
+4. Starte WhisperType — beim ersten Start wird das Whisper-Modell heruntergeladen (~1.5 GB)
+
+### Homebrew (coming soon)
+
+```bash
+brew tap DEIN-USERNAME/tap
+brew install --cask whisper-type
+```
+
 ### Aus Source bauen
 
-1. Xcode 15+ installieren
+1. Xcode 15+ und Homebrew installieren
 2. Repository klonen:
    ```bash
-   git clone https://github.com/DEIN-USERNAME/WhisperType.git
-   cd WhisperType
+   git clone --recursive https://github.com/DEIN-USERNAME/whisper-type.git
+   cd whisper-type
    ```
-3. In Xcode öffnen und bauen:
+3. Bauen:
    ```bash
-   open WhisperType.xcodeproj
+   brew install cmake xcodegen
+   make build
    ```
-   Oder via Command Line:
+4. App starten:
    ```bash
-   xcodebuild -scheme WhisperType -configuration Release
+   open build/Release/WhisperType.app
    ```
-4. App starten – beim ersten Start wird das Whisper-Modell heruntergeladen (~1.5 GB)
 
 ### Berechtigungen einrichten
 
@@ -47,7 +61,7 @@ Nach dem ersten Start muss WhisperType in den Systemeinstellungen freigegeben we
 
 1. WhisperType startet als Mikrofon-Icon in der Menüleiste
 2. Klicke in ein beliebiges Textfeld (Browser, Editor, Chat, IDE...)
-3. Drücke den Hotkey (Standard: Option+D)
+3. Drücke den Hotkey (Standard: Fn+Control)
 4. Sprich deinen Text
 5. Lasse los (Push-to-Talk) oder drücke erneut (Toggle-Modus)
 6. Der transkribierte Text wird automatisch eingefügt

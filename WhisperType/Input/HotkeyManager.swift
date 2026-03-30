@@ -46,11 +46,41 @@ final class HotkeyManager {
     }
 
     fileprivate func handleEvent(_ type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
-        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
-
-        let targetKeyCode = Int64(settings.hotkeyKeyCode)
         let targetModifiers = CGEventFlags(rawValue: UInt64(settings.hotkeyModifiers))
+        let isModifierOnly = settings.hotkeyKeyCode < 0
+
+        if isModifierOnly {
+            // Modifier-only hotkey: detect via flagsChanged
+            guard type == .flagsChanged else {
+                return Unmanaged.passUnretained(event)
+            }
+
+            let relevantFlags: CGEventFlags = [.maskAlternate, .maskControl, .maskCommand, .maskShift, .maskSecondaryFn]
+            let currentRelevant = flags.intersection(relevantFlags)
+            let targetRelevant = targetModifiers.intersection(relevantFlags)
+            let allPressed = currentRelevant.contains(targetRelevant)
+
+            if allPressed && !isHotkeyPressed {
+                isHotkeyPressed = true
+                DispatchQueue.main.async { [weak self] in
+                    self?.onHotkeyDown?()
+                }
+            } else if !allPressed && isHotkeyPressed {
+                isHotkeyPressed = false
+                if settings.hotkeyMode == .pushToTalk {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.onHotkeyUp?()
+                    }
+                }
+            }
+
+            return Unmanaged.passUnretained(event)
+        }
+
+        // Key-based hotkey (e.g. Option+D)
+        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+        let targetKeyCode = Int64(settings.hotkeyKeyCode)
 
         let relevantFlags: CGEventFlags = [.maskAlternate, .maskControl, .maskCommand, .maskShift]
         let currentRelevant = flags.intersection(relevantFlags)
