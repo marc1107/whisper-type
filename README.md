@@ -29,7 +29,7 @@ Lokale Sprache-zu-Text Diktierfunktion für macOS – komplett offline, powered 
 ### Homebrew (coming soon)
 
 ```bash
-brew tap DEIN-USERNAME/tap
+brew tap marc1107/tap
 brew install --cask whisper-type
 ```
 
@@ -38,7 +38,7 @@ brew install --cask whisper-type
 1. Xcode 15+ und Homebrew installieren
 2. Repository klonen:
    ```bash
-   git clone --recursive https://github.com/DEIN-USERNAME/whisper-type.git
+   git clone --recursive https://github.com/marc1107/whisper-type.git
    cd whisper-type
    ```
 3. Bauen:
