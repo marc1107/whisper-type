@@ -79,7 +79,7 @@ enum ModelManagerError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .downloadFailed: return "Modell-Download fehlgeschlagen."
+        case .downloadFailed: return NSLocalizedString("error.download_failed", comment: "")
         }
     }
 }

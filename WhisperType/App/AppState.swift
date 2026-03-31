@@ -46,7 +46,6 @@ final class AppState: ObservableObject {
             setError(error.localizedDescription)
         }
 
-        // Observe status changes for overlay
         $status
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newStatus in
@@ -107,7 +106,7 @@ final class AppState: ObservableObject {
         }() else { return }
 
         guard isModelLoaded else {
-            setError("Kein Whisper-Modell geladen. Bitte zuerst ein Modell herunterladen.")
+            setError(NSLocalizedString("error.no_model", comment: ""))
             return
         }
 

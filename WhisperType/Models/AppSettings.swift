@@ -1,6 +1,20 @@
 import Foundation
 import SwiftUI
 
+enum AppLanguage: String, CaseIterable {
+    case system = "system"
+    case english = "en"
+    case german = "de"
+
+    var displayName: String {
+        switch self {
+        case .system: return NSLocalizedString("settings.general.language_system", comment: "")
+        case .english: return "English"
+        case .german: return "Deutsch"
+        }
+    }
+}
+
 enum HotkeyMode: String, CaseIterable {
     case pushToTalk = "pushToTalk"
     case toggle = "toggle"
@@ -56,6 +70,7 @@ final class AppSettings: ObservableObject {
     @AppStorage("insertionMethod") var insertionMethod: TextInsertionMethod = .clipboard
     @AppStorage("maxRecordingDuration") var maxRecordingDuration: Double = 120
     @AppStorage("launchAtLogin") var launchAtLogin: Bool = false
+    @AppStorage("appLanguage") var appLanguage: AppLanguage = .system
     @AppStorage("customFillerWords") var customFillerWordsRaw: String = ""
 
     var customFillerWords: [String] {
@@ -94,7 +109,7 @@ final class AppSettings: ObservableObject {
         if hotkeyKeyCode >= 0 {
             parts.append(Self.keyCodeToString(UInt16(hotkeyKeyCode)))
         }
-        return parts.isEmpty ? "Nicht gesetzt" : parts.joined(separator: " + ")
+        return parts.isEmpty ? NSLocalizedString("settings.hotkey.not_set", comment: "") : parts.joined(separator: " + ")
     }
 
     static func keyCodeToString(_ keyCode: UInt16) -> String {

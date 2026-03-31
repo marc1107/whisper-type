@@ -87,9 +87,9 @@ struct OverlayContentView: View {
 
     private var statusText: String {
         switch status {
-        case .recording: return "Aufnahme..."
-        case .transcribing: return "Transkribiere..."
-        case .injecting: return "Fertig"
+        case .recording: return NSLocalizedString("status.recording", comment: "")
+        case .transcribing: return NSLocalizedString("status.transcribing", comment: "")
+        case .injecting: return NSLocalizedString("status.done", comment: "")
         case .error(let msg): return String(msg.prefix(30))
         default: return ""
         }

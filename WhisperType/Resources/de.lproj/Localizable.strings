@@ -1,0 +1,80 @@
+/* Menu Bar */
+"status.ready" = "Bereit";
+"status.no_model" = "Kein Modell geladen";
+"status.recording" = "Aufnahme...";
+"status.transcribing" = "Transkribiere...";
+"status.injecting" = "Füge ein...";
+"status.downloading_model" = "Lade Modell...";
+"status.done" = "Fertig";
+
+"menu.download_model" = "Modell herunterladen (%@)";
+"menu.downloading_model" = "Lade %@...";
+"menu.settings" = "Einstellungen...";
+"menu.quit" = "Beenden";
+
+/* Settings - General */
+"settings.general" = "Allgemein";
+"settings.general.launch_at_login" = "Bei Login starten";
+"settings.general.show_overlay" = "Status-Overlay anzeigen";
+"settings.general.insertion_method" = "Einfügemethode";
+"settings.general.insertion_clipboard" = "Zwischenablage (Cmd+V)";
+"settings.general.insertion_typing" = "Tastatur-Simulation";
+"settings.general.app_language" = "App-Sprache";
+"settings.general.language_system" = "Systemstandard";
+"settings.general.language_restart_hint" = "Starte die App neu, damit die Sprachänderung wirksam wird.";
+
+/* Settings - Permissions */
+"settings.permissions" = "Berechtigungen";
+"settings.permissions.accessibility" = "Bedienungshilfen: %@";
+"settings.permissions.microphone" = "Mikrofon: %@";
+"settings.permissions.granted" = "Erteilt";
+"settings.permissions.missing" = "Fehlt";
+"settings.permissions.open" = "Öffnen";
+
+/* Settings - Hotkey */
+"settings.hotkey" = "Hotkey";
+"settings.hotkey.shortcut" = "Tastenkombination";
+"settings.hotkey.press_combination" = "Drücke Tastenkombination...";
+"settings.hotkey.press_hint" = "Drücke die gewünschte Tastenkombination. Nur Modifier-Tasten (Fn, Control, Option, Shift, Command) oder Modifier + Taste.";
+"settings.hotkey.change" = "Ändern";
+"settings.hotkey.cancel" = "Abbrechen";
+"settings.hotkey.mode" = "Modus";
+"settings.hotkey.recording_mode" = "Aufnahmemodus";
+"settings.hotkey.push_to_talk" = "Push-to-Talk (gedrückt halten)";
+"settings.hotkey.toggle" = "Toggle (einmal drücken)";
+"settings.hotkey.recording" = "Aufnahme";
+"settings.hotkey.max_duration" = "Maximale Dauer:";
+"settings.hotkey.seconds" = "Sekunden";
+"settings.hotkey.not_set" = "Nicht gesetzt";
+
+/* Settings - Transcription */
+"settings.transcription" = "Transcription";
+"settings.transcription.model" = "Modell";
+"settings.transcription.whisper_model" = "Whisper-Modell";
+"settings.transcription.download_model" = "Modell herunterladen";
+"settings.transcription.downloading" = "Wird heruntergeladen...";
+"settings.transcription.cancel" = "Abbrechen";
+"settings.transcription.loaded" = "Geladen";
+"settings.transcription.load_model" = "Modell laden";
+"settings.transcription.delete" = "Löschen";
+"settings.transcription.language" = "Sprache";
+"settings.transcription.language_auto" = "Automatisch";
+"settings.transcription.language_german" = "Deutsch";
+"settings.transcription.language_english" = "Englisch";
+"settings.transcription.postprocessing" = "Nachbearbeitung";
+"settings.transcription.remove_fillers" = "Füllwörter entfernen";
+"settings.transcription.custom_fillers" = "Eigene Füllwörter:";
+"settings.transcription.new_filler" = "Neues Füllwort";
+"settings.transcription.add" = "Hinzufügen";
+
+/* Errors */
+"error.no_model" = "Kein Whisper-Modell geladen. Bitte zuerst ein Modell herunterladen.";
+"error.model_load_failed" = "Whisper-Modell konnte nicht geladen werden.";
+"error.model_not_loaded" = "Kein Whisper-Modell geladen.";
+"error.transcription_failed" = "Transkription fehlgeschlagen.";
+"error.converter_failed" = "Audio-Konverter konnte nicht erstellt werden.";
+"error.hotkey_failed" = "Globaler Hotkey konnte nicht registriert werden. Bitte Bedienungshilfen-Berechtigung prüfen.";
+"error.download_failed" = "Modell-Download fehlgeschlagen.";
+
+/* Microphone */
+"mic.permission_denied" = "WhisperType: Mikrofon-Berechtigung wurde nicht erteilt.";

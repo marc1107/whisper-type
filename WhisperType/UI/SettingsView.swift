@@ -8,13 +8,13 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             GeneralSettingsTab(settings: appState.settings)
-                .tabItem { Label("Allgemein", systemImage: "gear") }
+                .tabItem { Label(NSLocalizedString("settings.general", comment: ""), systemImage: "gear") }
 
             HotkeySettingsTab(settings: appState.settings)
-                .tabItem { Label("Hotkey", systemImage: "keyboard") }
+                .tabItem { Label(NSLocalizedString("settings.hotkey", comment: ""), systemImage: "keyboard") }
 
             TranscriptionSettingsTab(appState: appState)
-                .tabItem { Label("Transkription", systemImage: "text.bubble") }
+                .tabItem { Label(NSLocalizedString("settings.transcription", comment: ""), systemImage: "text.bubble") }
         }
         .frame(width: 500, height: 420)
     }
@@ -31,8 +31,8 @@ struct GeneralSettingsTab: View {
 
     var body: some View {
         Form {
-            Section("Allgemein") {
-                Toggle("Bei Login starten", isOn: $settings.launchAtLogin)
+            Section(NSLocalizedString("settings.general", comment: "")) {
+                Toggle(NSLocalizedString("settings.general.launch_at_login", comment: ""), isOn: $settings.launchAtLogin)
                     .onChange(of: settings.launchAtLogin) { _, newValue in
                         do {
                             if newValue {
@@ -45,22 +45,44 @@ struct GeneralSettingsTab: View {
                         }
                     }
 
-                Toggle("Status-Overlay anzeigen", isOn: $settings.showOverlay)
+                Toggle(NSLocalizedString("settings.general.show_overlay", comment: ""), isOn: $settings.showOverlay)
 
-                Picker("Einfügemethode", selection: $settings.insertionMethod) {
-                    Text("Zwischenablage (Cmd+V)").tag(TextInsertionMethod.clipboard)
-                    Text("Tastatur-Simulation").tag(TextInsertionMethod.typing)
+                Picker(NSLocalizedString("settings.general.insertion_method", comment: ""), selection: $settings.insertionMethod) {
+                    Text(NSLocalizedString("settings.general.insertion_clipboard", comment: "")).tag(TextInsertionMethod.clipboard)
+                    Text(NSLocalizedString("settings.general.insertion_typing", comment: "")).tag(TextInsertionMethod.typing)
+                }
+
+                Picker(NSLocalizedString("settings.general.app_language", comment: ""), selection: $settings.appLanguage) {
+                    ForEach(AppLanguage.allCases, id: \.self) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
+                }
+                .onChange(of: settings.appLanguage) { _, newValue in
+                    if newValue == .system {
+                        UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+                    } else {
+                        UserDefaults.standard.set([newValue.rawValue], forKey: "AppleLanguages")
+                    }
+                }
+
+                if settings.appLanguage != .system {
+                    Text(NSLocalizedString("settings.general.language_restart_hint", comment: ""))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
 
-            Section("Berechtigungen") {
+            Section(NSLocalizedString("settings.permissions", comment: "")) {
                 HStack {
                     Image(systemName: accessibilityGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(accessibilityGranted ? .green : .red)
-                    Text("Bedienungshilfen: \(accessibilityGranted ? "Erteilt" : "Fehlt")")
+                    Text(String(format: NSLocalizedString("settings.permissions.accessibility", comment: ""),
+                                accessibilityGranted
+                                    ? NSLocalizedString("settings.permissions.granted", comment: "")
+                                    : NSLocalizedString("settings.permissions.missing", comment: "")))
                     Spacer()
                     if !accessibilityGranted {
-                        Button("Öffnen") {
+                        Button(NSLocalizedString("settings.permissions.open", comment: "")) {
                             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                                 NSWorkspace.shared.open(url)
                             }
@@ -71,10 +93,13 @@ struct GeneralSettingsTab: View {
                 HStack {
                     Image(systemName: microphoneGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(microphoneGranted ? .green : .red)
-                    Text("Mikrofon: \(microphoneGranted ? "Erteilt" : "Fehlt")")
+                    Text(String(format: NSLocalizedString("settings.permissions.microphone", comment: ""),
+                                microphoneGranted
+                                    ? NSLocalizedString("settings.permissions.granted", comment: "")
+                                    : NSLocalizedString("settings.permissions.missing", comment: "")))
                     Spacer()
                     if !microphoneGranted {
-                        Button("Öffnen") {
+                        Button(NSLocalizedString("settings.permissions.open", comment: "")) {
                             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
                                 NSWorkspace.shared.open(url)
                             }
@@ -107,24 +132,24 @@ struct HotkeySettingsTab: View {
 
     var body: some View {
         Form {
-            Section("Tastenkombination") {
+            Section(NSLocalizedString("settings.hotkey.shortcut", comment: "")) {
                 HotkeyRecorderView(settings: settings)
             }
 
-            Section("Modus") {
-                Picker("Aufnahmemodus", selection: $settings.hotkeyMode) {
-                    Text("Push-to-Talk (gedrückt halten)").tag(HotkeyMode.pushToTalk)
-                    Text("Toggle (einmal drücken)").tag(HotkeyMode.toggle)
+            Section(NSLocalizedString("settings.hotkey.mode", comment: "")) {
+                Picker(NSLocalizedString("settings.hotkey.recording_mode", comment: ""), selection: $settings.hotkeyMode) {
+                    Text(NSLocalizedString("settings.hotkey.push_to_talk", comment: "")).tag(HotkeyMode.pushToTalk)
+                    Text(NSLocalizedString("settings.hotkey.toggle", comment: "")).tag(HotkeyMode.toggle)
                 }
                 .pickerStyle(.radioGroup)
             }
 
-            Section("Aufnahme") {
+            Section(NSLocalizedString("settings.hotkey.recording", comment: "")) {
                 HStack {
-                    Text("Maximale Dauer:")
-                    TextField("Sekunden", value: $settings.maxRecordingDuration, format: .number)
+                    Text(NSLocalizedString("settings.hotkey.max_duration", comment: ""))
+                    TextField(NSLocalizedString("settings.hotkey.seconds", comment: ""), value: $settings.maxRecordingDuration, format: .number)
                         .frame(width: 80)
-                    Text("Sekunden")
+                    Text(NSLocalizedString("settings.hotkey.seconds", comment: ""))
                 }
             }
         }
@@ -143,8 +168,8 @@ struct TranscriptionSettingsTab: View {
 
     var body: some View {
         Form {
-            Section("Modell") {
-                Picker("Whisper-Modell", selection: Binding(
+            Section(NSLocalizedString("settings.transcription.model", comment: "")) {
+                Picker(NSLocalizedString("settings.transcription.whisper_model", comment: ""), selection: Binding(
                     get: { settings.selectedModel },
                     set: { settings.selectedModel = $0 }
                 )) {
@@ -171,14 +196,14 @@ struct TranscriptionSettingsTab: View {
                                 .monospacedDigit()
                                 .frame(width: 40, alignment: .trailing)
                         }
-                        Button("Abbrechen") {
+                        Button(NSLocalizedString("settings.transcription.cancel", comment: "")) {
                             appState.modelManager.cancelDownload()
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                     }
                 } else if !settings.isModelDownloaded(settings.selectedModel) {
-                    Button("Modell herunterladen") {
+                    Button(NSLocalizedString("settings.transcription.download_model", comment: "")) {
                         Task {
                             try? await appState.modelManager.downloadModel(settings.selectedModel)
                             await appState.loadSelectedModel()
@@ -186,17 +211,17 @@ struct TranscriptionSettingsTab: View {
                     }
                 } else {
                     HStack {
-                        if appState.isModelLoaded && settings.selectedModel == settings.selectedModel {
-                            Label("Geladen", systemImage: "checkmark.circle.fill")
+                        if appState.isModelLoaded {
+                            Label(NSLocalizedString("settings.transcription.loaded", comment: ""), systemImage: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                                 .font(.caption)
                         } else {
-                            Button("Modell laden") {
+                            Button(NSLocalizedString("settings.transcription.load_model", comment: "")) {
                                 Task { await appState.loadSelectedModel() }
                             }
                         }
                         Spacer()
-                        Button("Löschen", role: .destructive) {
+                        Button(NSLocalizedString("settings.transcription.delete", comment: ""), role: .destructive) {
                             try? appState.modelManager.deleteModel(settings.selectedModel)
                             appState.isModelLoaded = false
                         }
@@ -206,31 +231,31 @@ struct TranscriptionSettingsTab: View {
                 }
             }
 
-            Section("Sprache") {
-                Picker("Sprache", selection: Binding(
+            Section(NSLocalizedString("settings.transcription.language", comment: "")) {
+                Picker(NSLocalizedString("settings.transcription.language", comment: ""), selection: Binding(
                     get: { settings.language },
                     set: { settings.language = $0 }
                 )) {
-                    Text("Automatisch").tag(InputLanguage.auto)
-                    Text("Deutsch").tag(InputLanguage.german)
-                    Text("English").tag(InputLanguage.english)
+                    Text(NSLocalizedString("settings.transcription.language_auto", comment: "")).tag(InputLanguage.auto)
+                    Text(NSLocalizedString("settings.transcription.language_german", comment: "")).tag(InputLanguage.german)
+                    Text(NSLocalizedString("settings.transcription.language_english", comment: "")).tag(InputLanguage.english)
                 }
             }
 
-            Section("Nachbearbeitung") {
-                Toggle("Füllwörter entfernen", isOn: Binding(
+            Section(NSLocalizedString("settings.transcription.postprocessing", comment: "")) {
+                Toggle(NSLocalizedString("settings.transcription.remove_fillers", comment: ""), isOn: Binding(
                     get: { settings.fillerFilterEnabled },
                     set: { settings.fillerFilterEnabled = $0 }
                 ))
 
                 if settings.fillerFilterEnabled {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Eigene Füllwörter:")
+                        Text(NSLocalizedString("settings.transcription.custom_fillers", comment: ""))
                             .font(.caption)
                         HStack {
-                            TextField("Neues Füllwort", text: $newFillerWord)
+                            TextField(NSLocalizedString("settings.transcription.new_filler", comment: ""), text: $newFillerWord)
                                 .textFieldStyle(.roundedBorder)
-                            Button("Hinzufügen") {
+                            Button(NSLocalizedString("settings.transcription.add", comment: "")) {
                                 guard !newFillerWord.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                                 var words = settings.customFillerWords
                                 words.append(newFillerWord.lowercased().trimmingCharacters(in: .whitespaces))

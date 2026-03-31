@@ -5,6 +5,10 @@ options:
     macOS: "14.0"
   xcodeVersion: "15.0"
   minimumXcodeGenVersion: "2.38"
+  developmentLanguage: en
+  knownRegions:
+    - en
+    - de
 
 settings:
   base:

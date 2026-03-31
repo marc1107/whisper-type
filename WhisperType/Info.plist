@@ -5,7 +5,7 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSMicrophoneUsageDescription</key>
-    <string>WhisperType benötigt Zugriff auf das Mikrofon für die Spracheingabe.</string>
+    <string>WhisperType needs microphone access for speech input.</string>
     <key>CFBundleName</key>
     <string>WhisperType</string>
     <key>CFBundleIdentifier</key>
@@ -18,5 +18,12 @@
     <string>APPL</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>de</string>
+    </array>
 </dict>
 </plist>

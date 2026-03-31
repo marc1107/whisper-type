@@ -95,9 +95,9 @@ enum WhisperError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .modelLoadFailed: return "Whisper-Modell konnte nicht geladen werden."
-        case .modelNotLoaded: return "Kein Whisper-Modell geladen."
-        case .transcriptionFailed: return "Transkription fehlgeschlagen."
+        case .modelLoadFailed: return NSLocalizedString("error.model_load_failed", comment: "")
+        case .modelNotLoaded: return NSLocalizedString("error.model_not_loaded", comment: "")
+        case .transcriptionFailed: return NSLocalizedString("error.transcription_failed", comment: "")
         }
     }
 }
