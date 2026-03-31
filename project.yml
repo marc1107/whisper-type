@@ -51,6 +51,7 @@ targets:
           - "-framework MetalKit"
           - "-framework Foundation"
         SWIFT_OBJC_BRIDGING_HEADER: "WhisperType/BridgingHeader.h"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_APP_SANDBOX: NO
         CODE_SIGN_IDENTITY: "-"
         PRODUCT_NAME: WhisperType

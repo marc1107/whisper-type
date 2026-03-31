@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon.png" width="128" alt="WhisperType Icon">
+</p>
+
 # WhisperType
 
 Lokale Sprache-zu-Text Diktierfunktion für macOS – komplett offline, powered by whisper.cpp.
