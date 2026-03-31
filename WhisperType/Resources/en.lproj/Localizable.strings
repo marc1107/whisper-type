@@ -1,0 +1,80 @@
+/* Menu Bar */
+"status.ready" = "Ready";
+"status.no_model" = "No model loaded";
+"status.recording" = "Recording...";
+"status.transcribing" = "Transcribing...";
+"status.injecting" = "Inserting...";
+"status.downloading_model" = "Downloading model...";
+"status.done" = "Done";
+
+"menu.download_model" = "Download model (%@)";
+"menu.downloading_model" = "Downloading %@...";
+"menu.settings" = "Settings...";
+"menu.quit" = "Quit";
+
+/* Settings - General */
+"settings.general" = "General";
+"settings.general.launch_at_login" = "Launch at login";
+"settings.general.show_overlay" = "Show status overlay";
+"settings.general.insertion_method" = "Insertion method";
+"settings.general.insertion_clipboard" = "Clipboard (Cmd+V)";
+"settings.general.insertion_typing" = "Keyboard simulation";
+"settings.general.app_language" = "App language";
+"settings.general.language_system" = "System default";
+"settings.general.language_restart_hint" = "Restart the app for the language change to take effect.";
+
+/* Settings - Permissions */
+"settings.permissions" = "Permissions";
+"settings.permissions.accessibility" = "Accessibility: %@";
+"settings.permissions.microphone" = "Microphone: %@";
+"settings.permissions.granted" = "Granted";
+"settings.permissions.missing" = "Missing";
+"settings.permissions.open" = "Open";
+
+/* Settings - Hotkey */
+"settings.hotkey" = "Hotkey";
+"settings.hotkey.shortcut" = "Keyboard shortcut";
+"settings.hotkey.press_combination" = "Press key combination...";
+"settings.hotkey.press_hint" = "Press the desired key combination. Modifier keys only (Fn, Control, Option, Shift, Command) or modifier + key.";
+"settings.hotkey.change" = "Change";
+"settings.hotkey.cancel" = "Cancel";
+"settings.hotkey.mode" = "Mode";
+"settings.hotkey.recording_mode" = "Recording mode";
+"settings.hotkey.push_to_talk" = "Push-to-Talk (hold)";
+"settings.hotkey.toggle" = "Toggle (press once)";
+"settings.hotkey.recording" = "Recording";
+"settings.hotkey.max_duration" = "Maximum duration:";
+"settings.hotkey.seconds" = "seconds";
+"settings.hotkey.not_set" = "Not set";
+
+/* Settings - Transcription */
+"settings.transcription" = "Transcription";
+"settings.transcription.model" = "Model";
+"settings.transcription.whisper_model" = "Whisper model";
+"settings.transcription.download_model" = "Download model";
+"settings.transcription.downloading" = "Downloading...";
+"settings.transcription.cancel" = "Cancel";
+"settings.transcription.loaded" = "Loaded";
+"settings.transcription.load_model" = "Load model";
+"settings.transcription.delete" = "Delete";
+"settings.transcription.language" = "Language";
+"settings.transcription.language_auto" = "Automatic";
+"settings.transcription.language_german" = "German";
+"settings.transcription.language_english" = "English";
+"settings.transcription.postprocessing" = "Post-processing";
+"settings.transcription.remove_fillers" = "Remove filler words";
+"settings.transcription.custom_fillers" = "Custom filler words:";
+"settings.transcription.new_filler" = "New filler word";
+"settings.transcription.add" = "Add";
+
+/* Errors */
+"error.no_model" = "No Whisper model loaded. Please download a model first.";
+"error.model_load_failed" = "Failed to load Whisper model.";
+"error.model_not_loaded" = "No Whisper model loaded.";
+"error.transcription_failed" = "Transcription failed.";
+"error.converter_failed" = "Failed to create audio converter.";
+"error.hotkey_failed" = "Failed to register global hotkey. Please check Accessibility permissions.";
+"error.download_failed" = "Model download failed.";
+
+/* Microphone */
+"mic.permission_denied" = "WhisperType: Microphone permission was not granted.";

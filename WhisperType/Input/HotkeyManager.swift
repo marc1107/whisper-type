@@ -144,7 +144,7 @@ enum HotkeyError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .tapCreationFailed:
-            return "Globaler Hotkey konnte nicht registriert werden. Bitte Bedienungshilfen-Berechtigung prüfen."
+            return NSLocalizedString("error.hotkey_failed", comment: "")
         }
     }
 }

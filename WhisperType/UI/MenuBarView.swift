@@ -17,7 +17,7 @@ struct MenuBarView: View {
             if appState.modelManager.isDownloading {
                 Divider()
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Lade \(appState.settings.selectedModel.displayName)...")
+                    Text(String(format: NSLocalizedString("menu.downloading_model", comment: ""), appState.settings.selectedModel.displayName))
                         .font(.caption)
                     ProgressView(value: appState.modelManager.downloadProgress)
                         .progressViewStyle(.linear)
@@ -27,14 +27,12 @@ struct MenuBarView: View {
                 }
             } else if !appState.isModelLoaded {
                 Divider()
-                Button("Modell herunterladen (\(appState.settings.selectedModel.displayName))") {
+                Button(String(format: NSLocalizedString("menu.download_model", comment: ""), appState.settings.selectedModel.displayName)) {
                     Task {
                         do {
                             try await appState.modelManager.downloadModel(appState.settings.selectedModel)
                             await appState.loadSelectedModel()
-                        } catch {
-                            // Error shown via status
-                        }
+                        } catch {}
                     }
                 }
             }
@@ -50,10 +48,10 @@ struct MenuBarView: View {
             Divider()
 
             SettingsLink {
-                Text("Einstellungen...")
+                Text(NSLocalizedString("menu.settings", comment: ""))
             }
 
-            Button("Beenden") {
+            Button(NSLocalizedString("menu.quit", comment: "")) {
                 NSApplication.shared.terminate(nil)
             }
             .keyboardShortcut("q")
@@ -70,12 +68,14 @@ struct MenuBarView: View {
         switch appState.status {
         case .idle:
             if appState.modelManager.isDownloading {
-                return "Lade Modell..."
+                return NSLocalizedString("status.downloading_model", comment: "")
             }
-            return appState.isModelLoaded ? "Bereit" : "Kein Modell geladen"
-        case .recording: return "Aufnahme..."
-        case .transcribing: return "Transkribiere..."
-        case .injecting: return "Füge ein..."
+            return appState.isModelLoaded
+                ? NSLocalizedString("status.ready", comment: "")
+                : NSLocalizedString("status.no_model", comment: "")
+        case .recording: return NSLocalizedString("status.recording", comment: "")
+        case .transcribing: return NSLocalizedString("status.transcribing", comment: "")
+        case .injecting: return NSLocalizedString("status.injecting", comment: "")
         case .error(let msg): return msg
         }
     }

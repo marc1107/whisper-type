@@ -1,92 +1,95 @@
 # WhisperType
 
-Lokale Sprache-zu-Text Diktierfunktion für macOS – komplett offline, powered by whisper.cpp.
+Local speech-to-text dictation for macOS — fully offline, powered by whisper.cpp.
+
+> **Deutsche Version:** Siehe [README.de.md](README.de.md)
 
 ## Features
 
-- **100% Lokal** – Keine Daten verlassen deinen Mac. Kein Internet nötig nach dem Modell-Download.
-- **Deutsch & Englisch** – Automatische Spracherkennung, Mischsprachen-Support (z.B. deutsche Sätze mit englischen Fachbegriffen)
-- **Globaler Hotkey** – Funktioniert in jeder App. Einstellbare Tastenkombination.
-- **Füllwort-Filter** – Entfernt automatisch "ähm", "also", "uhm" etc.
-- **Native macOS App** – Menübar-App, kein Dock-Icon, minimaler Ressourcenverbrauch
+- **100% Local** — No data leaves your Mac. No internet needed after model download.
+- **German & English** — Automatic language detection, mixed-language support (e.g. German sentences with English technical terms)
+- **Global Hotkey** — Works in any app. Configurable keyboard shortcut.
+- **Filler Word Filter** — Automatically removes "um", "uh", "like", "you know", etc.
+- **Native macOS App** — Menubar app, no dock icon, minimal resource usage
 
-## Systemanforderungen
+## System Requirements
 
-- macOS 14 (Sonoma) oder neuer
-- Apple Silicon (M1/M2/M3) empfohlen – Intel wird unterstützt aber langsamer
-- Mindestens 8 GB RAM (16 GB empfohlen für large-v3-turbo Modell)
-- ~3 GB freier Speicher für das Whisper-Modell
+- macOS 14 (Sonoma) or later
+- Apple Silicon (M1/M2/M3) recommended — Intel is supported but slower
+- At least 8 GB RAM (16 GB recommended for large-v3-turbo model)
+- ~3 GB free disk space for the Whisper model
 
 ## Installation
 
-### DMG Download (empfohlen)
+### DMG Download (recommended)
 
-1. Lade die neueste Version von der [Releases-Seite](../../releases/latest) herunter
-2. Öffne die `.dmg` Datei
-3. Ziehe WhisperType in den Programme-Ordner
-4. Starte WhisperType — beim ersten Start wird das Whisper-Modell heruntergeladen (~1.5 GB)
+1. Download the latest version from the [Releases page](../../releases/latest)
+2. Open the `.dmg` file
+3. Drag WhisperType to your Applications folder
+4. Launch WhisperType — the Whisper model will be downloaded on first launch (~1.5 GB)
 
-### Homebrew (coming soon)
+### Homebrew
 
 ```bash
 brew tap marc1107/tap
 brew install --cask whisper-type
 ```
 
-### Aus Source bauen
+### Build from Source
 
-1. Xcode 15+ und Homebrew installieren
-2. Repository klonen:
+1. Install Xcode 15+ and Homebrew
+2. Clone the repository:
    ```bash
    git clone --recursive https://github.com/marc1107/whisper-type.git
    cd whisper-type
    ```
-3. Bauen:
+3. Build:
    ```bash
    brew install cmake xcodegen
    make build
    ```
-4. App starten:
+4. Run the app:
    ```bash
    open build/Release/WhisperType.app
    ```
 
-### Berechtigungen einrichten
+### Setting Up Permissions
 
-Nach dem ersten Start muss WhisperType in den Systemeinstellungen freigegeben werden:
-1. **Mikrofon:** Wird automatisch angefragt
-2. **Bedienungshilfen:** Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → WhisperType aktivieren
+After first launch, WhisperType needs to be granted permissions in System Settings:
+1. **Microphone:** Automatically prompted
+2. **Accessibility:** System Settings > Privacy & Security > Accessibility > Enable WhisperType
 
-## Benutzung
+## Usage
 
-1. WhisperType startet als Mikrofon-Icon in der Menüleiste
-2. Klicke in ein beliebiges Textfeld (Browser, Editor, Chat, IDE...)
-3. Drücke den Hotkey (Standard: Fn+Control)
-4. Sprich deinen Text
-5. Lasse los (Push-to-Talk) oder drücke erneut (Toggle-Modus)
-6. Der transkribierte Text wird automatisch eingefügt
+1. WhisperType appears as a microphone icon in the menubar
+2. Click into any text field (browser, editor, chat, IDE...)
+3. Press the hotkey (default: Fn+Control)
+4. Speak your text
+5. Release (Push-to-Talk) or press again (Toggle mode)
+6. The transcribed text is automatically inserted
 
-## Einstellungen
+## Settings
 
-Über das Menübar-Icon → Einstellungen:
-- Hotkey ändern
-- Push-to-Talk oder Toggle-Modus
-- Whisper-Modell wechseln
-- Sprache festlegen oder automatisch erkennen lassen
-- Füllwort-Filter konfigurieren
+Via the menubar icon > Settings:
+- Change hotkey
+- Push-to-Talk or Toggle mode
+- Switch Whisper model
+- Set language or use automatic detection
+- Configure filler word filter
+- Change app language (English/German)
 
-## Unterstützte Whisper-Modelle
+## Supported Whisper Models
 
-| Modell | Größe | RAM-Bedarf | Geschwindigkeit | Qualität |
-|--------|-------|------------|-----------------|----------|
-| tiny | 75 MB | ~1 GB | Sehr schnell | Basis |
-| base | 142 MB | ~1 GB | Schnell | Gut |
-| small | 466 MB | ~2 GB | Mittel | Sehr gut |
-| medium | 1.5 GB | ~5 GB | Langsamer | Exzellent |
-| large-v3-turbo | 1.5 GB | ~5 GB | Mittel | Exzellent |
+| Model | Size | RAM Required | Speed | Quality |
+|-------|------|-------------|-------|---------|
+| tiny | 75 MB | ~1 GB | Very fast | Basic |
+| base | 142 MB | ~1 GB | Fast | Good |
+| small | 466 MB | ~2 GB | Medium | Very good |
+| medium | 1.5 GB | ~5 GB | Slower | Excellent |
+| large-v3-turbo | 1.5 GB | ~5 GB | Medium | Excellent |
 
-**Empfehlung für M1 16GB:** `large-v3-turbo` – beste Balance aus Qualität und Geschwindigkeit.
+**Recommendation for M1 16GB:** `large-v3-turbo` — best balance of quality and speed.
 
-## Lizenz
+## License
 
 MIT License

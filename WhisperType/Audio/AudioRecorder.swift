@@ -85,7 +85,7 @@ enum AudioRecorderError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .converterCreationFailed:
-            return "Audio-Konverter konnte nicht erstellt werden."
+            return NSLocalizedString("error.converter_failed", comment: "")
         }
     }
 }
