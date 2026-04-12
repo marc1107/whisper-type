@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(make *)",
+      "Bash(xcodebuild *)",
+      "Bash(swiftlint *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(pkill *)",
+      "Bash(open *)",
+      "Bash(gh api *)",
+      "Bash(cd whisper.cpp*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=\"$TOOL_INPUT_FILE_PATH\"; if [[ \"$FILE\" == *.swift ]]; then swiftlint lint --quiet --path \"$FILE\" 2>/dev/null; fi'"
+          }
+        ]
+      }
+    ]
+  }
+}
