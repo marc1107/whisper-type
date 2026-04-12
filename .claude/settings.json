@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'FILE=\"$TOOL_INPUT_FILE_PATH\"; if [[ \"$FILE\" == *.swift ]]; then swiftlint lint --quiet --path \"$FILE\" 2>/dev/null; fi'"
+            "command": "bash -c 'FILE=\"$TOOL_INPUT_FILE_PATH\"; if [[ \"$FILE\" == *.swift ]]; then swiftlint lint --quiet --path \"$FILE\" >/dev/null 2>&1; STATUS=$?; if [[ $STATUS -ne 0 ]]; then echo \"SwiftLint failed for $FILE (exit code: $STATUS).\" >&2; exit $STATUS; fi; fi'"
           }
         ]
       }

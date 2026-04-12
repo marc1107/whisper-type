@@ -18,7 +18,7 @@ WhisperType is a macOS menu bar app that provides system-wide speech-to-text dic
 
 ## Commands
 
-Prerequisites: Xcode 16+, `brew install xcodegen swiftlint`
+Prerequisites: Xcode 15+, `brew install xcodegen swiftlint`
 
 - **Setup** (first time or after submodule changes): `make xcode` — builds whisper.cpp with CMake and regenerates the `.xcodeproj`
 - **Build**: `make build`
@@ -52,7 +52,7 @@ The CI workflows (`.github/workflows/`) require `submodules: recursive` on check
 - `final class` for all service types — no inheritance
 - `@MainActor` isolation on state-holding types; `Task.detached` for off-main transcription work
 - `NSLock` for thread safety on `WhisperEngine` and `AudioRecorder`
-- All user-visible strings via `NSLocalizedString("key", comment: "")` — never hardcoded. Localizations in `Resources/en.lproj/` and `Resources/de.lproj/`
+- Prefer `NSLocalizedString("key", comment: "")` for user-facing UI and error strings. Localizations in `Resources/en.lproj/` and `Resources/de.lproj/`. Some existing labels (e.g. certain language/model names in settings metadata) are still hardcoded and should be localized when touched.
 - Errors are typed enums conforming to `LocalizedError` with `errorDescription` using `NSLocalizedString`
 - No third-party Swift dependencies — only Apple frameworks and whisper.cpp
 
@@ -65,7 +65,7 @@ The CI workflows (`.github/workflows/`) require `submodules: recursive` on check
 ## Linting
 
 - **SwiftLint** runs automatically after every `.swift` file edit via PostToolUse hook (configured in `.claude/settings.json`)
-- Config: `.swiftlint.yml` — excludes `whisper.cpp`, `build`, `DerivedData`
+- Config: `.swiftlint.yml` — excludes `whisper.cpp`, `build`, `DerivedData`, `WhisperType.xcodeproj`
 - Run manually: `swiftlint lint` (project-wide) or `swiftlint lint --path <file>` (single file)
 
 ## Development Workflow
