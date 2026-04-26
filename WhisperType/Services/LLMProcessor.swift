@@ -241,7 +241,11 @@ final class LLMProcessor: @unchecked Sendable {
         if !apiKey.isEmpty {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
-        request.timeoutInterval = 10
+        // Local Ollama with a small model + the full default prompt regularly
+        // takes 12–20 s to generate; cloud providers respond in <2 s so a
+        // generous ceiling here only matters when the network or daemon is
+        // genuinely stuck.
+        request.timeoutInterval = provider == .ollama ? 60 : 30
 
         do {
             request.httpBody = try JSONEncoder().encode(body)
