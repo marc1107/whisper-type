@@ -15,8 +15,11 @@ struct SettingsView: View {
 
             TranscriptionSettingsTab(appState: appState)
                 .tabItem { Label(NSLocalizedString("settings.transcription", comment: ""), systemImage: "text.bubble") }
+
+            AISettingsTab(settings: appState.settings)
+                .tabItem { Label(NSLocalizedString("settings.ai", comment: ""), systemImage: "sparkles") }
         }
-        .frame(width: 500, height: 420)
+        .frame(width: 500, height: 580)
     }
 }
 

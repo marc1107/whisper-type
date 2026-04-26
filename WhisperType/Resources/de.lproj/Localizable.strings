@@ -67,7 +67,41 @@
 "settings.transcription.new_filler" = "Neues Füllwort";
 "settings.transcription.add" = "Hinzufügen";
 
+/* Status - KI-Verbesserung */
+"status.enhancing" = "Verbessere...";
+"status.preparing_model" = "Modell wird vorbereitet…";
+
+/* Einstellungen - KI */
+"settings.ai" = "KI";
+"settings.ai.section.provider" = "KI-Nachbearbeitung";
+"settings.ai.enable" = "KI-Verbesserung aktivieren";
+"settings.ai.provider" = "Anbieter";
+"settings.ai.api_key" = "API-Schlüssel";
+"settings.ai.model_placeholder" = "Modell (Standard: %@)";
+"settings.ai.section.prompt" = "Prompt";
+"settings.ai.use_default_prompt" = "Eingebauten Standard-Prompt verwenden";
+"settings.ai.additional_instructions" = "Zusätzliche Anweisungen:";
+"settings.ai.section.dictionary" = "Wortkorrekturen";
+"settings.ai.word_from" = "Wort oder Phrase";
+"settings.ai.word_to" = "Korrektur";
+"settings.ai.add_word_pair" = "Hinzufügen";
+"settings.ai.thinking_mode" = "Thinking-Modus aktivieren";
+"settings.ai.thinking_mode_hint" = "Lässt das Modell vor der Antwort nachdenken. Langsamer, aber bessere Qualität.";
+"settings.ai.ollama_running" = "Ollama läuft";
+"settings.ai.ollama_not_installed" = "Ollama ist nicht installiert";
+"settings.ai.ollama_install_hint" = "Installiere Ollama, um die lokale KI-Verbesserung zu nutzen. Der LLM-Schritt wird übersprungen, bis Ollama erkannt wird.";
+"settings.ai.pull_model" = "Modell laden";
+"settings.ai.pulling_model" = "Lade %@…";
+
 /* Errors */
+"error.llm.empty_api_key" = "Kein API-Schlüssel für den ausgewählten KI-Anbieter konfiguriert.";
+"error.llm.network" = "KI-Anfrage fehlgeschlagen: %@";
+"error.llm.encoding" = "KI-Anfrage konnte nicht kodiert werden: %@";
+"error.llm.invalid_response" = "KI lieferte eine unerwartete Antwort (HTTP %d).";
+"error.llm.decoding" = "KI-Antwort konnte nicht verarbeitet werden.";
+"error.llm.empty_result" = "KI lieferte ein leeres Ergebnis.";
+"error.llm.rate_limited" = "KI-Anbieter hat das Limit erreicht. In %d s erneut versuchen oder Anbieter wechseln.";
+"error.llm.rate_limited_generic" = "KI-Anbieter hat das Limit erreicht. Später erneut versuchen oder Anbieter wechseln.";
 "error.no_model" = "Kein Whisper-Modell geladen. Bitte zuerst ein Modell herunterladen.";
 "error.model_load_failed" = "Whisper-Modell konnte nicht geladen werden.";
 "error.model_not_loaded" = "Kein Whisper-Modell geladen.";
@@ -75,6 +109,9 @@
 "error.converter_failed" = "Audio-Konverter konnte nicht erstellt werden.";
 "error.hotkey_failed" = "Globaler Hotkey konnte nicht registriert werden. Bitte Bedienungshilfen-Berechtigung prüfen.";
 "error.download_failed" = "Modell-Download fehlgeschlagen.";
+"error.ollama.unexpected_response" = "Ollama hat eine unerwartete Antwort zurückgegeben.";
+"error.ollama.pull_incomplete" = "Ollama-Modell-Download wurde unvollständig beendet. Bitte erneut versuchen.";
+"error.ollama.pull_incomplete_with_status" = "Ollama-Modell-Download fehlgeschlagen: %@";
 
 /* Microphone */
 "mic.permission_denied" = "WhisperType: Mikrofon-Berechtigung wurde nicht erteilt.";

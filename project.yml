@@ -24,6 +24,8 @@ targets:
         excludes:
           - "**/*.plist"
           - "**/*.entitlements"
+    resources:
+      - path: WhisperType/Resources/DefaultLLMPrompt.md
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.whispertype.app
@@ -61,6 +63,8 @@ targets:
     platform: macOS
     sources:
       - path: WhisperTypeTests
+    resources:
+      - path: WhisperType/Resources/DefaultLLMPrompt.md
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.whispertype.tests

@@ -1,7 +1,9 @@
+import AppKit
 import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var appState: AppState
+    @Environment(\.openSettings) private var openSettings
     @State private var didSetup = false
 
     var body: some View {
@@ -23,6 +25,15 @@ struct MenuBarView: View {
                         .progressViewStyle(.linear)
                     Text("\(Int(appState.modelManager.downloadProgress * 100))%")
                         .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            } else if appState.isPreparingModel {
+                Divider()
+                VStack(alignment: .leading, spacing: 4) {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                    Text(NSLocalizedString("status.preparing_model", comment: ""))
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
             } else if !appState.isModelLoaded {
@@ -47,9 +58,10 @@ struct MenuBarView: View {
 
             Divider()
 
-            SettingsLink {
-                Text(NSLocalizedString("menu.settings", comment: ""))
+            Button(NSLocalizedString("menu.settings", comment: "")) {
+                openSettingsWindow()
             }
+            .keyboardShortcut(",", modifiers: .command)
 
             Button(NSLocalizedString("menu.quit", comment: "")) {
                 NSApplication.shared.terminate(nil)
@@ -67,14 +79,19 @@ struct MenuBarView: View {
     private var statusText: String {
         switch appState.status {
         case .idle:
+            if appState.isPreparingModel {
+                return NSLocalizedString("status.preparing_model", comment: "")
+            }
             if appState.modelManager.isDownloading {
                 return NSLocalizedString("status.downloading_model", comment: "")
             }
             return appState.isModelLoaded
                 ? NSLocalizedString("status.ready", comment: "")
                 : NSLocalizedString("status.no_model", comment: "")
+        case .preparingModel: return NSLocalizedString("status.preparing_model", comment: "")
         case .recording: return NSLocalizedString("status.recording", comment: "")
         case .transcribing: return NSLocalizedString("status.transcribing", comment: "")
+        case .postProcessing: return NSLocalizedString("status.enhancing", comment: "")
         case .injecting: return NSLocalizedString("status.injecting", comment: "")
         case .error(let msg): return msg
         }
@@ -85,10 +102,30 @@ struct MenuBarView: View {
         case .idle:
             if appState.modelManager.isDownloading { return .orange }
             return appState.isModelLoaded ? .green : .orange
+        case .preparingModel: return .orange
         case .recording: return .red
         case .transcribing: return .orange
+        case .postProcessing: return .purple
         case .injecting: return .blue
         case .error: return .red
+        }
+    }
+
+    /// Opens the SwiftUI Settings scene and forces it to the foreground.
+    /// `SettingsLink` alone leaves the window behind other windows because
+    /// WhisperType runs as a menu-bar accessory — activate the app and bounce
+    /// the window's level so it lands on top.
+    private func openSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        openSettings()
+        DispatchQueue.main.async {
+            guard let window = NSApp.windows.first(where: {
+                $0.identifier?.rawValue.contains("Settings") == true
+            }) else { return }
+            window.level = .floating
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+            DispatchQueue.main.async { window.level = .normal }
         }
     }
 
