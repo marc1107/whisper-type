@@ -1,5 +1,32 @@
 import Foundation
 
+/// Lock-protected timestamp gate that decides — without ever touching the
+/// MainActor — whether a KVO progress tick is worth dispatching to the UI.
+/// Lives outside `ModelManager`'s actor isolation so the observer closure can
+/// drop ticks before scheduling any Task at all (the original "spawning a
+/// Task per fire" bug — see PR #9 review).
+final class ProgressThrottle: @unchecked Sendable {
+    private let lock = NSLock()
+    private var lastEmit: Date = .distantPast
+    private let interval: TimeInterval
+
+    init(interval: TimeInterval) {
+        self.interval = interval
+    }
+
+    /// Returns true at most once per `interval`, plus whenever `isFinal` is set
+    /// (so the final 100 % tick is never dropped). Thread-safe.
+    func shouldEmit(now: Date, isFinal: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if isFinal || now.timeIntervalSince(lastEmit) >= interval {
+            lastEmit = now
+            return true
+        }
+        return false
+    }
+}
+
 @MainActor
 final class ModelManager: ObservableObject {
     @Published var downloadProgress: Double = 0
@@ -8,8 +35,7 @@ final class ModelManager: ObservableObject {
 
     private var downloadTask: URLSessionDownloadTask?
     private var progressObservation: NSKeyValueObservation?
-    private var lastProgressUpdate: Date = .distantPast
-    private let progressInterval: TimeInterval = 0.1
+    private let throttle = ProgressThrottle(interval: 0.1)
 
     let settings = AppSettings.shared
 
@@ -47,15 +73,12 @@ final class ModelManager: ObservableObject {
                 }
             }
             self.downloadTask = task
-            self.progressObservation = task.progress.observe(\.fractionCompleted) { [weak self] progress, _ in
-                let now = Date()
+            let throttle = self.throttle
+            self.progressObservation = task.progress.observe(\.fractionCompleted) { [weak self, throttle] progress, _ in
                 let snapshot = progress.fractionCompleted
+                guard throttle.shouldEmit(now: Date(), isFinal: snapshot >= 1.0) else { return }
                 Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    if snapshot >= 1.0 || now.timeIntervalSince(self.lastProgressUpdate) >= self.progressInterval {
-                        self.downloadProgress = snapshot
-                        self.lastProgressUpdate = now
-                    }
+                    self?.downloadProgress = snapshot
                 }
             }
             task.resume()

@@ -56,40 +56,56 @@ final class OllamaService: ObservableObject {
         let pullURL = baseURL.appendingPathComponent("api/pull")
         let task = Task<Void, Error>.detached { [weak self] in
             guard let self else { return }
-
-            var request = URLRequest(url: pullURL)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-            let body = OllamaPullRequest(name: name, stream: true)
-            request.httpBody = try JSONEncoder().encode(body)
-
-            let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                throw OllamaError.unexpectedResponse
-            }
-
-            for try await line in asyncBytes.lines {
-                let progress = self.parseProgress(from: line)
-                if let progress {
-                    await MainActor.run { self.pullProgress = progress }
-                }
-
-                if let data = line.data(using: .utf8),
-                   let status = try? JSONDecoder().decode(OllamaPullStatus.self, from: data),
-                   status.status == "success" {
-                    await MainActor.run {
-                        self.pullProgress = 1.0
-                    }
-                    await self.detect()
-                    return
-                }
-            }
+            try await self.runPullStream(name: name, url: pullURL)
         }
 
         pullTask = task
-        try await task.value
+        do {
+            try await task.value
+        } catch {
+            lastError = error.localizedDescription
+            throw error
+        }
+    }
+
+    nonisolated private func runPullStream(name: String, url: URL) async throws {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(OllamaPullRequest(name: name, stream: true))
+
+        let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw OllamaError.unexpectedResponse
+        }
+
+        var sawSuccess = false
+        var lastErrorStatus: String?
+
+        for try await line in asyncBytes.lines {
+            if let progress = parseProgress(from: line) {
+                await MainActor.run { self.pullProgress = progress }
+            }
+            guard let data = line.data(using: .utf8),
+                  let status = try? JSONDecoder().decode(OllamaPullStatus.self, from: data) else { continue }
+
+            if status.status == "success" {
+                sawSuccess = true
+                await MainActor.run { self.pullProgress = 1.0 }
+                await detect()
+                return
+            }
+            if status.status.lowercased().hasPrefix("error") {
+                lastErrorStatus = status.status
+            }
+        }
+
+        // Stream closed without ever emitting `"status":"success"`.
+        // Treat it as a failed pull so callers don't believe the model arrived.
+        guard sawSuccess else {
+            throw OllamaError.pullIncomplete(lastStatus: lastErrorStatus)
+        }
     }
 
     func cancelPull() {
@@ -137,11 +153,17 @@ private struct OllamaPullProgress: Decodable {
 
 enum OllamaError: LocalizedError {
     case unexpectedResponse
+    case pullIncomplete(lastStatus: String?)
 
     var errorDescription: String? {
         switch self {
         case .unexpectedResponse:
             return NSLocalizedString("error.ollama.unexpected_response", comment: "")
+        case .pullIncomplete(let lastStatus):
+            if let lastStatus, !lastStatus.isEmpty {
+                return String(format: NSLocalizedString("error.ollama.pull_incomplete_with_status", comment: ""), lastStatus)
+            }
+            return NSLocalizedString("error.ollama.pull_incomplete", comment: "")
         }
     }
 }

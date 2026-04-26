@@ -97,6 +97,7 @@
 /* Errors */
 "error.llm.empty_api_key" = "No API key configured for the selected LLM provider.";
 "error.llm.network" = "LLM request failed: %@";
+"error.llm.encoding" = "Failed to encode LLM request: %@";
 "error.llm.invalid_response" = "LLM returned an unexpected response (HTTP %d).";
 "error.llm.decoding" = "Failed to parse LLM response.";
 "error.llm.empty_result" = "LLM returned an empty result.";
@@ -110,6 +111,8 @@
 "error.hotkey_failed" = "Failed to register global hotkey. Please check Accessibility permissions.";
 "error.download_failed" = "Model download failed.";
 "error.ollama.unexpected_response" = "Ollama returned an unexpected response.";
+"error.ollama.pull_incomplete" = "Ollama model pull ended without success. Please try again.";
+"error.ollama.pull_incomplete_with_status" = "Ollama model pull failed: %@";
 
 /* Microphone */
 "mic.permission_denied" = "WhisperType: Microphone permission was not granted.";

@@ -97,6 +97,7 @@
 /* Errors */
 "error.llm.empty_api_key" = "Kein API-Schlüssel für den ausgewählten KI-Anbieter konfiguriert.";
 "error.llm.network" = "KI-Anfrage fehlgeschlagen: %@";
+"error.llm.encoding" = "KI-Anfrage konnte nicht kodiert werden: %@";
 "error.llm.invalid_response" = "KI lieferte eine unerwartete Antwort (HTTP %d).";
 "error.llm.decoding" = "KI-Antwort konnte nicht verarbeitet werden.";
 "error.llm.empty_result" = "KI lieferte ein leeres Ergebnis.";
@@ -110,6 +111,8 @@
 "error.hotkey_failed" = "Globaler Hotkey konnte nicht registriert werden. Bitte Bedienungshilfen-Berechtigung prüfen.";
 "error.download_failed" = "Modell-Download fehlgeschlagen.";
 "error.ollama.unexpected_response" = "Ollama hat eine unerwartete Antwort zurückgegeben.";
+"error.ollama.pull_incomplete" = "Ollama-Modell-Download wurde unvollständig beendet. Bitte erneut versuchen.";
+"error.ollama.pull_incomplete_with_status" = "Ollama-Modell-Download fehlgeschlagen: %@";
 
 /* Microphone */
 "mic.permission_denied" = "WhisperType: Mikrofon-Berechtigung wurde nicht erteilt.";

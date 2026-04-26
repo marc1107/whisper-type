@@ -3,6 +3,7 @@ import Foundation
 enum LLMError: LocalizedError, Equatable {
     case emptyAPIKey
     case networkError(Error)
+    case encodingError(Error)
     case invalidResponse(Int)
     case decodingError
     case emptyResult
@@ -14,6 +15,8 @@ enum LLMError: LocalizedError, Equatable {
             return NSLocalizedString("error.llm.empty_api_key", comment: "")
         case .networkError(let error):
             return String(format: NSLocalizedString("error.llm.network", comment: ""), error.localizedDescription)
+        case .encodingError(let error):
+            return String(format: NSLocalizedString("error.llm.encoding", comment: ""), error.localizedDescription)
         case .invalidResponse(let code):
             return String(format: NSLocalizedString("error.llm.invalid_response", comment: ""), code)
         case .decodingError:
@@ -38,7 +41,8 @@ enum LLMError: LocalizedError, Equatable {
             return l == r
         case (.rateLimited(let l), .rateLimited(let r)):
             return l == r
-        case (.networkError(let l), .networkError(let r)):
+        case (.networkError(let l), .networkError(let r)),
+             (.encodingError(let l), .encodingError(let r)):
             return (l as NSError) == (r as NSError)
         default:
             return false
@@ -85,14 +89,25 @@ private struct ChatResponse: Decodable {
     let choices: [ChatResponseChoice]
 }
 
+/// Anchor type used to locate the WhisperType module's bundle as a fallback
+/// when `Bundle.main` doesn't carry the resource (e.g. unit-test bundles that
+/// aren't hosted by the app).
+private final class DefaultPromptBundleAnchor {}
+
 enum DefaultPromptLoader {
     static let prompt: String = {
-        guard let url = Bundle.main.url(forResource: "DefaultLLMPrompt", withExtension: "md"),
-              let text = try? String(contentsOf: url, encoding: .utf8) else {
-            assertionFailure("DefaultLLMPrompt.md missing from bundle")
-            return ""
+        let candidates: [Bundle] = [
+            .main,
+            Bundle(for: DefaultPromptBundleAnchor.self),
+        ]
+        for bundle in candidates {
+            if let url = bundle.url(forResource: "DefaultLLMPrompt", withExtension: "md"),
+               let text = try? String(contentsOf: url, encoding: .utf8) {
+                return text
+            }
         }
-        return text
+        assertionFailure("DefaultLLMPrompt.md missing from bundle")
+        return ""
     }()
 }
 
@@ -180,8 +195,10 @@ final class LLMProcessor: @unchecked Sendable {
 
         if !entries.isEmpty {
             let lines = entries
-                .filter { !$0.from.isEmpty }
-                .map { "- \($0.from) → \($0.to)" }
+                .map { ($0.from.trimmingCharacters(in: .whitespacesAndNewlines),
+                        $0.to.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                .filter { !$0.0.isEmpty && !$0.1.isEmpty }
+                .map { "- \($0.0) → \($0.1)" }
                 .joined(separator: "\n")
             if !lines.isEmpty {
                 parts.append("Word corrections dictionary (always apply these):\n\(lines)")
@@ -229,7 +246,7 @@ final class LLMProcessor: @unchecked Sendable {
         do {
             request.httpBody = try JSONEncoder().encode(body)
         } catch {
-            throw LLMError.networkError(error)
+            throw LLMError.encodingError(error)
         }
         return request
     }

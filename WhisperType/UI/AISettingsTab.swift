@@ -122,14 +122,18 @@ struct AISettingsTab: View {
                 set: { settings.llmUseDefaultPrompt = $0 }
             ))
 
-            VStack(alignment: .leading, spacing: 4) {
-                Toggle(NSLocalizedString("settings.ai.thinking_mode", comment: ""), isOn: Binding(
-                    get: { settings.llmThinkingEnabled },
-                    set: { settings.llmThinkingEnabled = $0 }
-                ))
-                Text(NSLocalizedString("settings.ai.thinking_mode_hint", comment: ""))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            // Thinking mode is currently emitted only for Ollama in LLMProcessor.
+            // Hide the toggle for other providers so users don't toggle a no-op.
+            if settings.llmProvider == .ollama {
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle(NSLocalizedString("settings.ai.thinking_mode", comment: ""), isOn: Binding(
+                        get: { settings.llmThinkingEnabled },
+                        set: { settings.llmThinkingEnabled = $0 }
+                    ))
+                    Text(NSLocalizedString("settings.ai.thinking_mode_hint", comment: ""))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             VStack(alignment: .leading, spacing: 4) {

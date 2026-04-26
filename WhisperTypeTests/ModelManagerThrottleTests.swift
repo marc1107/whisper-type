@@ -1,47 +1,65 @@
 import XCTest
 @testable import WhisperType
 
-// MARK: - ModelManager progress throttle
+// MARK: - ProgressThrottle
 
-/// Tests that the KVO throttle inside ModelManager limits how often
-/// `downloadProgress` is updated on the main actor.
-///
-/// The production throttle uses date-based gating: updates separated by less
-/// than `progressInterval` (0.1 s) are dropped. Firing many synthetic updates
-/// in a tight loop should therefore produce far fewer published values than
-/// input callbacks.
-///
-/// NOTE: `progressInterval` is declared `private` in ModelManager, so it is
-/// not accessible via `@testable import`. The test below therefore verifies
-/// the observable contract (initial state) rather than the internal constant.
-///
-/// To enable the full throttle-count assertion, ask the swift-engineer to
-/// change `private let progressInterval` to `internal let progressInterval`
-/// (or add a nonisolated `shouldEmitProgress(now:) -> Bool` helper). Then
-/// replace the SKIP body with the direct property check shown in the comment.
-final class ModelManagerThrottleTests: XCTestCase {
+/// The throttle gate that fronts `ModelManager`'s KVO observer must drop
+/// most ticks but never the final 100 % tick. Verified directly against the
+/// `ProgressThrottle` helper so the test is deterministic and fast.
+final class ProgressThrottleTests: XCTestCase {
 
+    /// 100 synthetic ticks 1 ms apart span 99 ms — one interval (100 ms) of
+    /// gating means at most two emits (the very first call and possibly one
+    /// more if the boundary is crossed). The assertion is generous to avoid
+    /// timing-edge flakes.
+    func testEmitsAtMostOncePerInterval() {
+        let throttle = ProgressThrottle(interval: 0.1)
+        let base = Date()
+        var emitCount = 0
+        for index in 0..<100 {
+            let now = base.addingTimeInterval(Double(index) * 0.001)
+            if throttle.shouldEmit(now: now, isFinal: false) {
+                emitCount += 1
+            }
+        }
+        XCTAssertLessThanOrEqual(emitCount, 2,
+                                 "100 ticks across 99 ms must produce ≤2 emits")
+        XCTAssertGreaterThanOrEqual(emitCount, 1,
+                                    "First tick must always emit")
+    }
+
+    /// `isFinal: true` bypasses the rate gate so the UI never gets stuck
+    /// showing 99 % when the download actually completed.
+    func testFinalTickAlwaysEmits() {
+        let throttle = ProgressThrottle(interval: 1.0)
+        let base = Date()
+        XCTAssertTrue(throttle.shouldEmit(now: base, isFinal: true))
+        // Immediately after, with the rate gate fully closed, isFinal still wins.
+        XCTAssertTrue(throttle.shouldEmit(now: base.addingTimeInterval(0.001), isFinal: true))
+    }
+
+    /// Ticks spread more than one interval apart should all emit.
+    func testTicksAcrossManyIntervalsAllEmit() {
+        let throttle = ProgressThrottle(interval: 0.1)
+        let base = Date()
+        var emitCount = 0
+        for index in 0..<5 {
+            let now = base.addingTimeInterval(Double(index) * 0.2) // 200 ms apart
+            if throttle.shouldEmit(now: now, isFinal: false) {
+                emitCount += 1
+            }
+        }
+        XCTAssertEqual(emitCount, 5)
+    }
+}
+
+// MARK: - ModelManager initial state
+
+final class ModelManagerInitialStateTests: XCTestCase {
     /// Regression: `downloadProgress` starts at 0 and `isDownloading` starts
     /// false, ensuring the UI never shows a stale progress bar on launch.
     @MainActor
-    func testProgressUpdatesAreThrottled() {
-        // SKIP — full throttle-count assertion requires internal access.
-        //
-        // Once `progressInterval` is `internal` (or a `shouldEmitProgress` helper
-        // is exposed), replace this body with:
-        //
-        //   let manager = ModelManager()
-        //   let base = Date()
-        //   var emitCount = 0
-        //   for i in 0..<100 {
-        //       let t = base.addingTimeInterval(Double(i) * 0.001) // 1 ms apart
-        //       if manager.shouldEmitProgress(now: t) { emitCount += 1 }
-        //   }
-        //   // 100 ms span / 100 ms interval = ~1-2 true results
-        //   XCTAssertLessThanOrEqual(emitCount, 3,
-        //       "Throttle must cap updates to ≤3 in a 100 ms window")
-        //
-        // For now verify the observable initial state that the throttle preserves.
+    func testInitialState() {
         let manager = ModelManager()
         XCTAssertEqual(manager.downloadProgress, 0.0, accuracy: 0.001,
                        "downloadProgress must start at 0")

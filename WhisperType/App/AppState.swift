@@ -84,12 +84,24 @@ final class AppState: ObservableObject {
         }
         let path = settings.modelPath(for: model).path
         isPreparingModel = true
+        // Drive `status` so the overlay's `.preparingModel` branch is reachable.
+        // Don't clobber an active recording or transcription — only flip from idle/error.
+        let shouldDriveStatus = (status == .idle) || {
+            if case .error = status { return true }
+            return false
+        }()
+        if shouldDriveStatus {
+            status = .preparingModel
+        }
         do {
             try await Task.detached(priority: .userInitiated) { [engine = whisperEngine] in
                 try engine.loadModel(at: path)
             }.value
             isPreparingModel = false
             isModelLoaded = true
+            if shouldDriveStatus, status == .preparingModel {
+                status = .idle
+            }
         } catch {
             isPreparingModel = false
             isModelLoaded = false

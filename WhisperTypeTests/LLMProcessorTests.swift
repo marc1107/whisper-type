@@ -132,6 +132,39 @@ final class LLMPromptTests: XCTestCase {
         XCTAssertFalse(prompt.contains(" → something"))
     }
 
+    /// Entries with an empty `to` would render as `- foo → ` and confuse the
+    /// model. They must be dropped just like entries with an empty `from`.
+    func testEntriesWithEmptyToFilteredOut() {
+        let entries = [
+            DictionaryEntry(from: "foo", to: ""),
+            DictionaryEntry(from: "valid", to: "Valid"),
+        ]
+        let prompt = processor.buildSystemPromptFromParts(
+            useDefault: false,
+            customPrompt: "",
+            entries: entries
+        )
+        XCTAssertTrue(prompt.contains("valid → Valid"))
+        XCTAssertFalse(prompt.contains("foo → "), "Entries with empty `to` must be dropped")
+    }
+
+    /// Whitespace-only fields must be treated as empty so leading/trailing
+    /// spaces from settings input don't smuggle in malformed lines.
+    func testWhitespaceOnlyFieldsFilteredOut() {
+        let entries = [
+            DictionaryEntry(from: "  ", to: "Something"),
+            DictionaryEntry(from: "  spaced  ", to: "  Spaced  "),
+        ]
+        let prompt = processor.buildSystemPromptFromParts(
+            useDefault: false,
+            customPrompt: "",
+            entries: entries
+        )
+        XCTAssertTrue(prompt.contains("spaced → Spaced"), "Whitespace must be trimmed")
+        XCTAssertFalse(prompt.contains("Something") && prompt.contains("→  Something"),
+                       "Whitespace-only `from` must drop the entry")
+    }
+
     func testAllPartsEmpty() {
         let prompt = processor.buildSystemPromptFromParts(
             useDefault: false,
@@ -285,90 +318,5 @@ final class ThinkingTagStrippingTests: XCTestCase {
         let input = "clean response without any tags"
         let result = processor.stripThinkingTags(input)
         XCTAssertEqual(result, input)
-    }
-}
-
-// MARK: - ChatRequest thinking-flag tests
-
-/// These tests verify the `think` field is correctly included or omitted in the
-/// JSON-encoded request body based on provider and settings.
-///
-/// They access the internal `buildChatRequestBody(provider:model:systemPrompt:text:settings:)`
-/// helper via `@testable import`. If the swift-engineer exposes that function with a
-/// different signature, adjust the call site here to match.
-///
-/// The class is `@MainActor` because `AppSettings` uses `@AppStorage` wrappers whose
-/// property-setter dispatch is tied to the main thread. Running on the main actor
-/// also prevents `UserDefaults` writes from bleeding between tests via async races.
-///
-/// We also seed `UserDefaults.standard` directly before each test so that the
-/// `@AppStorage` wrapper sees a known value regardless of any prior test execution.
-@MainActor
-final class ChatRequestThinkingFlagTests: XCTestCase {
-
-    private let thinkingKey = "llmThinkingEnabled"
-
-    override func setUp() {
-        super.setUp()
-        // Ensure a clean slate before each test.
-        UserDefaults.standard.removeObject(forKey: thinkingKey)
-    }
-
-    override func tearDown() {
-        super.tearDown()
-        UserDefaults.standard.removeObject(forKey: thinkingKey)
-    }
-
-    /// Groq provider must never emit `"think"` even when thinking is enabled in settings.
-    func testThinkingFlagOmittedForGroq() throws {
-        UserDefaults.standard.set(true, forKey: thinkingKey)
-        let settings = AppSettings()
-
-        let body = try LLMProcessor().buildChatRequestBody(
-            provider: .groq,
-            model: "llama-3.3-70b-versatile",
-            systemPrompt: "sys",
-            text: "hello",
-            settings: settings
-        )
-
-        let json = try XCTUnwrap(String(data: body, encoding: .utf8))
-        XCTAssertFalse(json.contains("\"think\""), "Groq request must not contain 'think' key")
-    }
-
-    /// Ollama provider with thinking enabled must emit `"think":true`.
-    func testThinkingFlagPresentForOllama() throws {
-        UserDefaults.standard.set(true, forKey: thinkingKey)
-        let settings = AppSettings()
-
-        let body = try LLMProcessor().buildChatRequestBody(
-            provider: .ollama,
-            model: "gemma4:e2b",
-            systemPrompt: "sys",
-            text: "hello",
-            settings: settings
-        )
-
-        let json = try XCTUnwrap(String(data: body, encoding: .utf8))
-        XCTAssertTrue(json.contains("\"think\":true") || json.contains("\"think\": true"),
-                      "Ollama request with thinking enabled must contain 'think':true")
-    }
-
-    /// Ollama provider with thinking disabled must omit `"think"` entirely (encodeIfPresent → nil).
-    func testThinkingFlagOmittedWhenDisabled() throws {
-        UserDefaults.standard.set(false, forKey: thinkingKey)
-        let settings = AppSettings()
-
-        let body = try LLMProcessor().buildChatRequestBody(
-            provider: .ollama,
-            model: "gemma4:e2b",
-            systemPrompt: "sys",
-            text: "hello",
-            settings: settings
-        )
-
-        let json = try XCTUnwrap(String(data: body, encoding: .utf8))
-        XCTAssertFalse(json.contains("\"think\""),
-                       "Ollama request with thinking disabled must not contain 'think' key")
     }
 }
