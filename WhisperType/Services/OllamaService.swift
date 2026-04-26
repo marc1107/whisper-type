@@ -54,7 +54,7 @@ final class OllamaService: ObservableObject {
         }
 
         let pullURL = baseURL.appendingPathComponent("api/pull")
-        let task = Task.detached<Void> { [weak self] in
+        let task = Task<Void, Error>.detached { [weak self] in
             guard let self else { return }
 
             var request = URLRequest(url: pullURL)
