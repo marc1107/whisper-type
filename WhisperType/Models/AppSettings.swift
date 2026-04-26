@@ -151,7 +151,7 @@ final class AppSettings: ObservableObject {
     // Fn + Control
     // maskControl(0x40000) | maskSecondaryFn(0x800000)
     @AppStorage("hotkeyModifiers") var hotkeyModifiers: Int = 0x840000
-    @AppStorage("selectedModel") var selectedModel: WhisperModel = .largeTurbo
+    @AppStorage("selectedModel") var selectedModel: WhisperModel = .distilLargeV3
     @AppStorage("language") var language: InputLanguage = .auto
     @AppStorage("fillerFilterEnabled") var fillerFilterEnabled: Bool = true
     @AppStorage("showOverlay") var showOverlay: Bool = true

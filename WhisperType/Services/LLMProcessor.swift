@@ -1,11 +1,12 @@
 import Foundation
 
-enum LLMError: LocalizedError {
+enum LLMError: LocalizedError, Equatable {
     case emptyAPIKey
     case networkError(Error)
     case invalidResponse(Int)
     case decodingError
     case emptyResult
+    case rateLimited(retryAfter: Int?)
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +20,28 @@ enum LLMError: LocalizedError {
             return NSLocalizedString("error.llm.decoding", comment: "")
         case .emptyResult:
             return NSLocalizedString("error.llm.empty_result", comment: "")
+        case .rateLimited(let retryAfter):
+            if let retryAfter {
+                return String(format: NSLocalizedString("error.llm.rate_limited", comment: ""), retryAfter)
+            }
+            return NSLocalizedString("error.llm.rate_limited_generic", comment: "")
+        }
+    }
+
+    static func == (lhs: LLMError, rhs: LLMError) -> Bool {
+        switch (lhs, rhs) {
+        case (.emptyAPIKey, .emptyAPIKey),
+             (.decodingError, .decodingError),
+             (.emptyResult, .emptyResult):
+            return true
+        case (.invalidResponse(let l), .invalidResponse(let r)):
+            return l == r
+        case (.rateLimited(let l), .rateLimited(let r)):
+            return l == r
+        case (.networkError(let l), .networkError(let r)):
+            return (l as NSError) == (r as NSError)
+        default:
+            return false
         }
     }
 }
@@ -122,6 +145,9 @@ final class LLMProcessor: @unchecked Sendable {
 
         if let httpResponse = response as? HTTPURLResponse,
            httpResponse.statusCode != 200 {
+            if httpResponse.statusCode == 429 {
+                throw LLMError.rateLimited(retryAfter: Self.parseRetryAfter(from: httpResponse))
+            }
             throw LLMError.invalidResponse(httpResponse.statusCode)
         }
 
@@ -228,6 +254,22 @@ final class LLMProcessor: @unchecked Sendable {
         let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw LLMError.emptyResult }
         return trimmed
+    }
+
+    static func parseRetryAfter(from response: HTTPURLResponse) -> Int? {
+        guard let raw = response.value(forHTTPHeaderField: "Retry-After")?
+            .trimmingCharacters(in: .whitespaces),
+              !raw.isEmpty else { return nil }
+        if let seconds = Int(raw) { return seconds }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        if let date = formatter.date(from: raw) {
+            let delta = Int(date.timeIntervalSinceNow.rounded())
+            return delta > 0 ? delta : 0
+        }
+        return nil
     }
 
     func stripThinkingTags(_ text: String) -> String {

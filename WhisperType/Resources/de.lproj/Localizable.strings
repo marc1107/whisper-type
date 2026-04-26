@@ -100,6 +100,8 @@
 "error.llm.invalid_response" = "KI lieferte eine unerwartete Antwort (HTTP %d).";
 "error.llm.decoding" = "KI-Antwort konnte nicht verarbeitet werden.";
 "error.llm.empty_result" = "KI lieferte ein leeres Ergebnis.";
+"error.llm.rate_limited" = "KI-Anbieter hat das Limit erreicht. In %d s erneut versuchen oder Anbieter wechseln.";
+"error.llm.rate_limited_generic" = "KI-Anbieter hat das Limit erreicht. Später erneut versuchen oder Anbieter wechseln.";
 "error.no_model" = "Kein Whisper-Modell geladen. Bitte zuerst ein Modell herunterladen.";
 "error.model_load_failed" = "Whisper-Modell konnte nicht geladen werden.";
 "error.model_not_loaded" = "Kein Whisper-Modell geladen.";

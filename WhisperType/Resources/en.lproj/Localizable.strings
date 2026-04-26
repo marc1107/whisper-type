@@ -100,6 +100,8 @@
 "error.llm.invalid_response" = "LLM returned an unexpected response (HTTP %d).";
 "error.llm.decoding" = "Failed to parse LLM response.";
 "error.llm.empty_result" = "LLM returned an empty result.";
+"error.llm.rate_limited" = "LLM provider rate-limited the request. Try again in %d s or switch provider.";
+"error.llm.rate_limited_generic" = "LLM provider rate-limited the request. Try again later or switch provider.";
 "error.no_model" = "No Whisper model loaded. Please download a model first.";
 "error.model_load_failed" = "Failed to load Whisper model.";
 "error.model_not_loaded" = "No Whisper model loaded.";

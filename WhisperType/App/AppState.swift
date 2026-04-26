@@ -217,10 +217,17 @@ final class AppState: ObservableObject {
             : ""
         guard !provider.requiresAPIKey || !apiKey.isEmpty else { return text }
         await MainActor.run { self.status = .postProcessing }
-        if let enhanced = try? await llmProcessor.process(text: text, context: llmContext), !enhanced.isEmpty {
-            return enhanced
+        do {
+            let enhanced = try await llmProcessor.process(text: text, context: llmContext)
+            return enhanced.isEmpty ? text : enhanced
+        } catch let error as LLMError {
+            if case .rateLimited = error {
+                await MainActor.run { self.setTransientError(error.localizedDescription) }
+            }
+            return text
+        } catch {
+            return text
         }
-        return text
     }
 
     private func setError(_ message: String) {
@@ -228,6 +235,18 @@ final class AppState: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
             if case .error = self?.status {
                 self?.status = .idle
+            }
+        }
+    }
+
+    /// Surfaces a transient error message without parking the state machine in `.error` —
+    /// the next dictation can start immediately because `idle` is restored after 4 s.
+    private func setTransientError(_ message: String) {
+        status = .error(message)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            guard let self else { return }
+            if case .error(let current) = self.status, current == message {
+                self.status = .idle
             }
         }
     }

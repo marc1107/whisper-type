@@ -213,6 +213,52 @@ final class DefaultPromptLoaderTests: XCTestCase {
             "Prompt must identify the assistant as a transcription post-processor"
         )
     }
+
+    /// The dictionary-usage guidance section must remain in the bundled prompt so
+    /// the model interprets `wrong → right` pairs as context-aware hints rather
+    /// than blind find-and-replace.
+    func testDefaultPromptIncludesDictionaryGuidance() {
+        XCTAssertTrue(
+            DefaultPromptLoader.prompt.contains("Using the word corrections dictionary"),
+            "Prompt must include the dictionary-usage guidance section"
+        )
+    }
+}
+
+// MARK: - Rate-limit (HTTP 429) handling
+
+final class LLMRateLimitTests: XCTestCase {
+    private func response(headers: [String: String]) -> HTTPURLResponse {
+        HTTPURLResponse(
+            url: URL(string: "https://example.com")!,
+            statusCode: 429,
+            httpVersion: "HTTP/1.1",
+            headerFields: headers
+        )!
+    }
+
+    /// A `Retry-After` header in delta-seconds form should be parsed back as the
+    /// integer the provider sent.
+    func testRetryAfterParsedAsSeconds() {
+        let parsed = LLMProcessor.parseRetryAfter(from: response(headers: ["Retry-After": "30"]))
+        XCTAssertEqual(parsed, 30)
+    }
+
+    /// Missing `Retry-After` returns nil so the caller falls back to the generic
+    /// "try again later" message instead of formatting a bogus duration.
+    func testRetryAfterMissingReturnsNil() {
+        let parsed = LLMProcessor.parseRetryAfter(from: response(headers: [:]))
+        XCTAssertNil(parsed)
+    }
+
+    /// `LLMError.rateLimited(retryAfter: nil)` must use the generic localized
+    /// message — not crash on the `%d` format specifier.
+    func testRateLimitedErrorWithoutRetryUsesGenericMessage() {
+        let error: LLMError = .rateLimited(retryAfter: nil)
+        let description = error.errorDescription ?? ""
+        XCTAssertFalse(description.isEmpty)
+        XCTAssertFalse(description.contains("%d"), "Generic message must not leak format specifier")
+    }
 }
 
 // MARK: - Thinking-tag stripping tests
