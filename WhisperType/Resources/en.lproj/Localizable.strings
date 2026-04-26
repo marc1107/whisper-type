@@ -22,6 +22,7 @@
 "settings.general.app_language" = "App language";
 "settings.general.language_system" = "System default";
 "settings.general.language_restart_hint" = "Restart the app for the language change to take effect.";
+"settings.general.restart_now" = "Restart Now";
 
 /* Settings - Permissions */
 "settings.permissions" = "Permissions";

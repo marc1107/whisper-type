@@ -13,7 +13,7 @@ struct SettingsView: View {
             HotkeySettingsTab(settings: appState.settings)
                 .tabItem { Label(NSLocalizedString("settings.hotkey", comment: ""), systemImage: "keyboard") }
 
-            TranscriptionSettingsTab(appState: appState)
+            TranscriptionSettingsTab(appState: appState, settings: appState.settings)
                 .tabItem { Label(NSLocalizedString("settings.transcription", comment: ""), systemImage: "text.bubble") }
 
             AISettingsTab(settings: appState.settings)
@@ -69,9 +69,17 @@ struct GeneralSettingsTab: View {
                 }
 
                 if settings.appLanguage != .system {
-                    Text(NSLocalizedString("settings.general.language_restart_hint", comment: ""))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack {
+                        Text(NSLocalizedString("settings.general.language_restart_hint", comment: ""))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Button(NSLocalizedString("settings.general.restart_now", comment: "")) {
+                            AppRelauncher.relaunch()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
                 }
             }
 
@@ -165,17 +173,14 @@ struct HotkeySettingsTab: View {
 
 struct TranscriptionSettingsTab: View {
     @ObservedObject var appState: AppState
+    @ObservedObject var settings: AppSettings
     @State private var newFillerWord = ""
-
-    var settings: AppSettings { appState.settings }
 
     var body: some View {
         Form {
             Section(NSLocalizedString("settings.transcription.model", comment: "")) {
-                Picker(NSLocalizedString("settings.transcription.whisper_model", comment: ""), selection: Binding(
-                    get: { settings.selectedModel },
-                    set: { settings.selectedModel = $0 }
-                )) {
+                Picker(NSLocalizedString("settings.transcription.whisper_model", comment: ""),
+                       selection: $settings.selectedModel) {
                     ForEach(WhisperModel.allCases, id: \.self) { model in
                         HStack {
                             Text(model.displayName)
@@ -187,6 +192,9 @@ struct TranscriptionSettingsTab: View {
                         }
                         .tag(model)
                     }
+                }
+                .onChange(of: settings.selectedModel) { _, _ in
+                    Task { await appState.loadSelectedModel() }
                 }
 
                 if appState.modelManager.isDownloading {
@@ -235,10 +243,8 @@ struct TranscriptionSettingsTab: View {
             }
 
             Section(NSLocalizedString("settings.transcription.language", comment: "")) {
-                Picker(NSLocalizedString("settings.transcription.language", comment: ""), selection: Binding(
-                    get: { settings.language },
-                    set: { settings.language = $0 }
-                )) {
+                Picker(NSLocalizedString("settings.transcription.language", comment: ""),
+                       selection: $settings.language) {
                     Text(NSLocalizedString("settings.transcription.language_auto", comment: "")).tag(InputLanguage.auto)
                     Text(NSLocalizedString("settings.transcription.language_german", comment: "")).tag(InputLanguage.german)
                     Text(NSLocalizedString("settings.transcription.language_english", comment: "")).tag(InputLanguage.english)
@@ -246,10 +252,8 @@ struct TranscriptionSettingsTab: View {
             }
 
             Section(NSLocalizedString("settings.transcription.postprocessing", comment: "")) {
-                Toggle(NSLocalizedString("settings.transcription.remove_fillers", comment: ""), isOn: Binding(
-                    get: { settings.fillerFilterEnabled },
-                    set: { settings.fillerFilterEnabled = $0 }
-                ))
+                Toggle(NSLocalizedString("settings.transcription.remove_fillers", comment: ""),
+                       isOn: $settings.fillerFilterEnabled)
 
                 if settings.fillerFilterEnabled {
                     VStack(alignment: .leading, spacing: 8) {
