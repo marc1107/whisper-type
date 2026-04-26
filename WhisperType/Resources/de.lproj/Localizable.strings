@@ -22,6 +22,7 @@
 "settings.general.app_language" = "App-Sprache";
 "settings.general.language_system" = "Systemstandard";
 "settings.general.language_restart_hint" = "Starte die App neu, damit die Sprachänderung wirksam wird.";
+"settings.general.restart_now" = "Jetzt neu starten";
 
 /* Settings - Permissions */
 "settings.permissions" = "Berechtigungen";
