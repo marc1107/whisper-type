@@ -4,19 +4,49 @@ import XCTest
 /// Verifies every `@AppStorage`-backed setting round-trips through `UserDefaults`.
 /// These tests are the safety net for the bug in #10 where Picker bindings appeared
 /// to "revert" because the wrapping view never observed `AppSettings`.
+///
+/// The shared-singleton tests touch `UserDefaults.standard` (that's where
+/// `@AppStorage` writes), so `setUp` snapshots every key the suite mutates and
+/// `tearDown` restores it — even if a test aborts mid-flight.
 final class AppSettingsPersistenceTests: XCTestCase {
     private let suiteName = "WhisperTypeSettingsTests"
     private var defaults: UserDefaults!
+
+    private static let sharedKeys: [String] = [
+        "selectedModel",
+        "language",
+        "appLanguage",
+        "customFillerWords",
+        "llmDictionaryEntriesRaw",
+        "llmModel",
+        "llmProvider",
+    ]
+    private var sharedSnapshot: [String: Any] = [:]
 
     override func setUp() {
         super.setUp()
         UserDefaults().removePersistentDomain(forName: suiteName)
         defaults = UserDefaults(suiteName: suiteName)
+
+        sharedSnapshot = Self.sharedKeys.reduce(into: [:]) { snapshot, key in
+            if let value = UserDefaults.standard.object(forKey: key) {
+                snapshot[key] = value
+            }
+        }
     }
 
     override func tearDown() {
         UserDefaults().removePersistentDomain(forName: suiteName)
         defaults = nil
+
+        for key in Self.sharedKeys {
+            if let value = sharedSnapshot[key] {
+                UserDefaults.standard.set(value, forKey: key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+        sharedSnapshot = [:]
         super.tearDown()
     }
 
@@ -56,8 +86,6 @@ final class AppSettingsPersistenceTests: XCTestCase {
 
     func testAppSettingsSelectedModelRoundTrip() {
         let settings = AppSettings.shared
-        let original = settings.selectedModel
-        defer { settings.selectedModel = original }
 
         for model in [WhisperModel.tiny, .base, .largeTurbo, .distilLargeV3] {
             settings.selectedModel = model
@@ -70,8 +98,6 @@ final class AppSettingsPersistenceTests: XCTestCase {
 
     func testAppSettingsLanguageRoundTrip() {
         let settings = AppSettings.shared
-        let original = settings.language
-        defer { settings.language = original }
 
         for language in InputLanguage.allCases {
             settings.language = language
@@ -82,8 +108,6 @@ final class AppSettingsPersistenceTests: XCTestCase {
 
     func testAppSettingsAppLanguageRoundTrip() {
         let settings = AppSettings.shared
-        let original = settings.appLanguage
-        defer { settings.appLanguage = original }
 
         for language in AppLanguage.allCases {
             settings.appLanguage = language
@@ -96,8 +120,6 @@ final class AppSettingsPersistenceTests: XCTestCase {
 
     func testCustomFillerWordsRoundTripThroughCSV() {
         let settings = AppSettings.shared
-        let original = settings.customFillerWordsRaw
-        defer { settings.customFillerWordsRaw = original }
 
         settings.customFillerWords = ["Also", "halt", "  EBEN  "]
         XCTAssertEqual(settings.customFillerWords, ["also", "halt", "eben"])
@@ -105,8 +127,6 @@ final class AppSettingsPersistenceTests: XCTestCase {
 
     func testLLMDictionaryEntriesRoundTripThroughJSON() {
         let settings = AppSettings.shared
-        let original = settings.llmDictionaryEntries
-        defer { settings.llmDictionaryEntries = original }
 
         let entries = [
             DictionaryEntry(from: "ki", to: "AI"),
@@ -121,12 +141,6 @@ final class AppSettingsPersistenceTests: XCTestCase {
 
     func testEffectiveLLMModelFallsBackToProviderDefault() {
         let settings = AppSettings.shared
-        let originalModel = settings.llmModel
-        let originalProvider = settings.llmProvider
-        defer {
-            settings.llmModel = originalModel
-            settings.llmProvider = originalProvider
-        }
 
         settings.llmProvider = .groq
         settings.llmModel = ""

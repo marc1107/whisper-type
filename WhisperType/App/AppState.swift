@@ -30,6 +30,7 @@ final class AppState: ObservableObject {
 
     private var recordingTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
+    private var modelLoadTask: Task<Void, Never>?
 
     var isRecording: Bool { status == .recording }
 
@@ -77,6 +78,18 @@ final class AppState: ObservableObject {
     }
 
     func loadSelectedModel() async {
+        // Cancel any in-flight load so rapid model switches don't race;
+        // the awaited Task is the new "current" one and supersedes the previous.
+        modelLoadTask?.cancel()
+        let task = Task { [weak self] in
+            await self?.performLoadSelectedModel()
+            return
+        }
+        modelLoadTask = task
+        await task.value
+    }
+
+    private func performLoadSelectedModel() async {
         let model = settings.selectedModel
         guard settings.isModelDownloaded(model) else {
             isModelLoaded = false
@@ -97,12 +110,22 @@ final class AppState: ObservableObject {
             try await Task.detached(priority: .userInitiated) { [engine = whisperEngine] in
                 try engine.loadModel(at: path)
             }.value
+            // Bail out if a newer load supersedes this one or the user
+            // already picked a different model while we were loading.
+            guard !Task.isCancelled, settings.selectedModel == model else {
+                isPreparingModel = false
+                return
+            }
             isPreparingModel = false
             isModelLoaded = true
             if shouldDriveStatus, status == .preparingModel {
                 status = .idle
             }
         } catch {
+            guard !Task.isCancelled, settings.selectedModel == model else {
+                isPreparingModel = false
+                return
+            }
             isPreparingModel = false
             isModelLoaded = false
             setError(error.localizedDescription)
