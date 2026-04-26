@@ -69,6 +69,8 @@ struct OverlayContentView: View {
         switch status {
         case .recording: return "mic.fill"
         case .transcribing: return "brain"
+        case .preparingModel: return "arrow.down.doc"
+        case .postProcessing: return "sparkles"
         case .injecting: return "checkmark.circle.fill"
         case .error: return "exclamationmark.triangle.fill"
         default: return "mic"
@@ -79,6 +81,8 @@ struct OverlayContentView: View {
         switch status {
         case .recording: return .red
         case .transcribing: return .orange
+        case .preparingModel: return .orange
+        case .postProcessing: return .purple
         case .injecting: return .green
         case .error: return .red
         default: return .primary
@@ -89,6 +93,8 @@ struct OverlayContentView: View {
         switch status {
         case .recording: return NSLocalizedString("status.recording", comment: "")
         case .transcribing: return NSLocalizedString("status.transcribing", comment: "")
+        case .preparingModel: return NSLocalizedString("status.preparing_model", comment: "")
+        case .postProcessing: return NSLocalizedString("status.enhancing", comment: "")
         case .injecting: return NSLocalizedString("status.done", comment: "")
         case .error(let msg): return String(msg.prefix(30))
         default: return ""

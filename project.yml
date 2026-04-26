@@ -24,6 +24,8 @@ targets:
         excludes:
           - "**/*.plist"
           - "**/*.entitlements"
+    resources:
+      - path: WhisperType/Resources/DefaultLLMPrompt.md
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.whispertype.app

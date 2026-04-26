@@ -31,12 +31,24 @@ enum TextInsertionMethod: String, CaseIterable {
     case typing = "typing"
 }
 
+enum ModelGroup: String {
+    case compact = "Compact"
+    case large = "Large"
+    case distil = "Distil (Optimized)"
+}
+
 enum WhisperModel: String, CaseIterable {
     case tiny = "ggml-tiny"
     case base = "ggml-base"
     case small = "ggml-small"
     case medium = "ggml-medium"
     case largeTurbo = "ggml-large-v3-turbo"
+    case largeTurboQ5 = "ggml-large-v3-turbo-q5_0"
+    case largeV1 = "ggml-large-v1"
+    case largeV2 = "ggml-large-v2"
+    case largeV3 = "ggml-large-v3"
+    case distilLargeV3 = "ggml-distil-large-v3"
+    case distilMediumEn = "ggml-distil-medium.en"
 
     var displayName: String {
         switch self {
@@ -45,13 +57,89 @@ enum WhisperModel: String, CaseIterable {
         case .small: return "Small (466 MB)"
         case .medium: return "Medium (1.5 GB)"
         case .largeTurbo: return "Large v3 Turbo (1.5 GB)"
+        case .largeTurboQ5: return "Large v3 Turbo Q5 (950 MB)"
+        case .largeV1: return "Large v1 (2.9 GB)"
+        case .largeV2: return "Large v2 (2.9 GB)"
+        case .largeV3: return "Large v3 (2.9 GB)"
+        case .distilLargeV3: return "Distil Large v3 (1.5 GB)"
+        case .distilMediumEn: return "Distil Medium English-only (765 MB)"
         }
+    }
+
+    var group: ModelGroup {
+        switch self {
+        case .tiny, .base, .small, .medium, .largeTurboQ5:
+            return .compact
+        case .largeTurbo, .largeV1, .largeV2, .largeV3:
+            return .large
+        case .distilLargeV3, .distilMediumEn:
+            return .distil
+        }
+    }
+
+    /// True for models that only support English transcription
+    var isEnglishOnly: Bool {
+        self == .distilMediumEn
     }
 
     var filename: String { "\(rawValue).bin" }
 
     var downloadURL: URL {
         URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/\(filename)")!
+    }
+}
+
+enum LLMProvider: String, CaseIterable {
+    case groq = "groq"
+    case cerebras = "cerebras"
+    case ollama = "ollama"
+    case openRouter = "openRouter"
+
+    var displayName: String {
+        switch self {
+        case .groq: return "Groq"
+        case .cerebras: return "Cerebras"
+        case .ollama: return "Ollama (local)"
+        case .openRouter: return "OpenRouter"
+        }
+    }
+
+    var baseURL: String {
+        switch self {
+        case .groq: return "https://api.groq.com/openai/v1"
+        case .cerebras: return "https://api.cerebras.ai/v1"
+        case .ollama: return "http://localhost:11434/v1"
+        case .openRouter: return "https://openrouter.ai/api/v1"
+        }
+    }
+
+    var defaultModel: String {
+        switch self {
+        case .groq: return "llama-3.3-70b-versatile"
+        case .cerebras: return "llama3.1-8b"
+        case .ollama: return "gemma4:e2b"
+        case .openRouter: return "meta-llama/llama-3.3-70b-instruct:free"
+        }
+    }
+
+    var requiresAPIKey: Bool {
+        self != .ollama
+    }
+
+    var keychainKey: String {
+        "llm_api_key_\(rawValue)"
+    }
+}
+
+struct DictionaryEntry: Codable, Identifiable, Equatable {
+    var id: UUID
+    var from: String
+    var to: String
+
+    init(id: UUID = UUID(), from: String = "", to: String = "") {
+        self.id = id
+        self.from = from
+        self.to = to
     }
 }
 
@@ -73,6 +161,17 @@ final class AppSettings: ObservableObject {
     @AppStorage("appLanguage") var appLanguage: AppLanguage = .system
     @AppStorage("customFillerWords") var customFillerWordsRaw: String = ""
 
+    // LLM post-processing
+    @AppStorage("llmEnabled") var llmEnabled: Bool = false
+    @AppStorage("llmProvider") var llmProvider: LLMProvider = .ollama
+    @AppStorage("llmModel") var llmModel: String = ""
+    @AppStorage("llmUseDefaultPrompt") var llmUseDefaultPrompt: Bool = true
+    @AppStorage("llmCustomPrompt") var llmCustomPrompt: String = ""
+    @AppStorage("llmThinkingEnabled") var llmThinkingEnabled: Bool = false
+    @AppStorage("llmDictionaryEntriesRaw") private var llmDictionaryEntriesRaw: String = "[]"
+
+    var effectiveLLMModel: String { llmModel.isEmpty ? llmProvider.defaultModel : llmModel }
+
     var customFillerWords: [String] {
         get {
             customFillerWordsRaw
@@ -82,6 +181,21 @@ final class AppSettings: ObservableObject {
         }
         set {
             customFillerWordsRaw = newValue.joined(separator: ",")
+        }
+    }
+
+    var llmDictionaryEntries: [DictionaryEntry] {
+        get {
+            guard let data = llmDictionaryEntriesRaw.data(using: .utf8),
+                  let entries = try? JSONDecoder().decode([DictionaryEntry].self, from: data)
+            else { return [] }
+            return entries
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue),
+                  let str = String(data: data, encoding: .utf8)
+            else { return }
+            llmDictionaryEntriesRaw = str
         }
     }
 

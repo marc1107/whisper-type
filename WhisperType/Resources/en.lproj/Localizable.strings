@@ -67,7 +67,39 @@
 "settings.transcription.new_filler" = "New filler word";
 "settings.transcription.add" = "Add";
 
+/* Status - AI enhancement */
+"status.enhancing" = "Enhancing...";
+"status.preparing_model" = "Preparing model…";
+
+/* Settings - AI */
+"settings.ai" = "AI";
+"settings.ai.section.provider" = "LLM Post-Processing";
+"settings.ai.enable" = "Enable AI enhancement";
+"settings.ai.provider" = "Provider";
+"settings.ai.api_key" = "API Key";
+"settings.ai.model_placeholder" = "Model (default: %@)";
+"settings.ai.ollama_hint" = "Ollama runs locally. Make sure Ollama is installed and running.";
+"settings.ai.section.prompt" = "Prompt";
+"settings.ai.use_default_prompt" = "Use built-in default prompt";
+"settings.ai.additional_instructions" = "Additional instructions:";
+"settings.ai.section.dictionary" = "Word Corrections";
+"settings.ai.word_from" = "Word or phrase";
+"settings.ai.word_to" = "Correction";
+"settings.ai.add_word_pair" = "Add";
+"settings.ai.thinking_mode" = "Enable thinking mode";
+"settings.ai.thinking_mode_hint" = "Lets the model reason before responding. Slower but higher quality.";
+"settings.ai.ollama_running" = "Ollama is running";
+"settings.ai.ollama_not_installed" = "Ollama is not installed";
+"settings.ai.ollama_install_hint" = "Install Ollama to use local AI enhancement. The LLM step will be skipped until Ollama is detected.";
+"settings.ai.pull_model" = "Pull model";
+"settings.ai.pulling_model" = "Pulling %@…";
+
 /* Errors */
+"error.llm.empty_api_key" = "No API key configured for the selected LLM provider.";
+"error.llm.network" = "LLM request failed: %@";
+"error.llm.invalid_response" = "LLM returned an unexpected response (HTTP %d).";
+"error.llm.decoding" = "Failed to parse LLM response.";
+"error.llm.empty_result" = "LLM returned an empty result.";
 "error.no_model" = "No Whisper model loaded. Please download a model first.";
 "error.model_load_failed" = "Failed to load Whisper model.";
 "error.model_not_loaded" = "No Whisper model loaded.";
@@ -75,6 +107,7 @@
 "error.converter_failed" = "Failed to create audio converter.";
 "error.hotkey_failed" = "Failed to register global hotkey. Please check Accessibility permissions.";
 "error.download_failed" = "Model download failed.";
+"error.ollama.unexpected_response" = "Ollama returned an unexpected response.";
 
 /* Microphone */
 "mic.permission_denied" = "WhisperType: Microphone permission was not granted.";

@@ -6,6 +6,8 @@ enum AppStatus: Equatable {
     case idle
     case recording
     case transcribing
+    case preparingModel
+    case postProcessing
     case injecting
     case error(String)
 }
@@ -15,6 +17,7 @@ final class AppState: ObservableObject {
     @Published var status: AppStatus = .idle
     @Published var lastTranscription: String = ""
     @Published var isModelLoaded: Bool = false
+    @Published var isPreparingModel: Bool = false
 
     let settings = AppSettings.shared
     let audioRecorder = AudioRecorder()
@@ -22,6 +25,8 @@ final class AppState: ObservableObject {
     let modelManager = ModelManager()
     let hotkeyManager = HotkeyManager()
     let overlayController = OverlayWindowController()
+    let llmProcessor = LLMProcessor()
+    let ollamaService = OllamaService()
 
     private var recordingTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -53,7 +58,7 @@ final class AppState: ObservableObject {
                 switch newStatus {
                 case .idle:
                     self.overlayController.hide()
-                case .recording, .transcribing, .injecting, .error:
+                case .recording, .transcribing, .preparingModel, .postProcessing, .injecting, .error:
                     self.overlayController.show(status: newStatus)
                 }
             }
@@ -61,6 +66,13 @@ final class AppState: ObservableObject {
 
         Task {
             await loadSelectedModel()
+        }
+
+        Task {
+            await ollamaService.detect()
+            if settings.llmProvider == .ollama && settings.llmEnabled && ollamaService.isInstalled {
+                try? await ollamaService.pullModelIfMissing(settings.effectiveLLMModel)
+            }
         }
     }
 
@@ -71,10 +83,15 @@ final class AppState: ObservableObject {
             return
         }
         let path = settings.modelPath(for: model).path
+        isPreparingModel = true
         do {
-            try whisperEngine.loadModel(at: path)
+            try await Task.detached(priority: .userInitiated) { [engine = whisperEngine] in
+                try engine.loadModel(at: path)
+            }.value
+            isPreparingModel = false
             isModelLoaded = true
         } catch {
+            isPreparingModel = false
             isModelLoaded = false
             setError(error.localizedDescription)
         }
@@ -140,49 +157,70 @@ final class AppState: ObservableObject {
 
         status = .transcribing
 
-        let language = settings.language.rawValue
+        // Force English for English-only distil models
+        let selectedModel = settings.selectedModel
+        let rawLanguage = settings.language.rawValue
+        let effectiveLanguage: String? = selectedModel.isEnglishOnly ? "en" : (rawLanguage == "auto" ? nil : rawLanguage)
+
         let engine = whisperEngine
         let fillerEnabled = settings.fillerFilterEnabled
         let customFillers = settings.customFillerWords
         let insertionMethod = settings.insertionMethod
+        let llmEnabled = settings.llmEnabled
+        let llmProcessor = self.llmProcessor
+        let llmContext = LLMRequestContext(
+            useDefaultPrompt: settings.llmUseDefaultPrompt,
+            customPrompt: settings.llmCustomPrompt,
+            dictionary: settings.llmDictionaryEntries,
+            thinkingEnabled: settings.llmThinkingEnabled,
+            model: settings.effectiveLLMModel,
+            provider: settings.llmProvider
+        )
 
         Task.detached { [weak self] in
             do {
-                let rawText = try engine.transcribe(
-                    samples: samples,
-                    language: language == "auto" ? nil : language
-                )
-
-                let processor = TextPostProcessor(
-                    enabled: fillerEnabled,
-                    customFillerWords: customFillers
-                )
-                let processedText = processor.process(rawText)
+                let rawText = try engine.transcribe(samples: samples, language: effectiveLanguage)
+                let processedText = TextPostProcessor(enabled: fillerEnabled, customFillerWords: customFillers).process(rawText)
+                let finalText = await self?.applyLLMIfEnabled(
+                    text: processedText,
+                    llmEnabled: llmEnabled,
+                    llmProcessor: llmProcessor,
+                    llmContext: llmContext
+                ) ?? processedText
 
                 await MainActor.run {
                     guard let self else { return }
-                    self.lastTranscription = processedText
-                    guard !processedText.isEmpty else {
-                        self.status = .idle
-                        return
-                    }
+                    self.lastTranscription = finalText
+                    guard !finalText.isEmpty else { self.status = .idle; return }
                     self.status = .injecting
-                    TextInjector.inject(
-                        processedText,
-                        method: insertionMethod == .clipboard ? .clipboard : .typing
-                    )
+                    TextInjector.inject(finalText, method: insertionMethod == .clipboard ? .clipboard : .typing)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        if self.status == .injecting {
-                            self.status = .idle
-                        }
+                        if self.status == .injecting { self.status = .idle }
                     }
                 }
             } catch {
-                await MainActor.run {
-                    self?.setError(error.localizedDescription)
-                }
+                await MainActor.run { self?.setError(error.localizedDescription) }
             }
         }
+    }
+
+    nonisolated private func applyLLMIfEnabled(
+        text: String,
+        llmEnabled: Bool,
+        llmProcessor: LLMProcessor,
+        llmContext: LLMRequestContext
+    ) async -> String {
+        guard llmEnabled else { return text }
+        let provider = llmContext.provider
+        let apiKey = provider.requiresAPIKey
+            ? (KeychainHelper.load(key: provider.keychainKey) ?? "")
+            : ""
+        guard !provider.requiresAPIKey || !apiKey.isEmpty else { return text }
+        await MainActor.run { self.status = .postProcessing }
+        if let enhanced = try? await llmProcessor.process(text: text, context: llmContext), !enhanced.isEmpty {
+            return enhanced
+        }
+        return text
     }
 
     private func setError(_ message: String) {

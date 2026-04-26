@@ -8,6 +8,8 @@ final class ModelManager: ObservableObject {
 
     private var downloadTask: URLSessionDownloadTask?
     private var progressObservation: NSKeyValueObservation?
+    private var lastProgressUpdate: Date = .distantPast
+    private let progressInterval: TimeInterval = 0.1
 
     let settings = AppSettings.shared
 
@@ -46,8 +48,14 @@ final class ModelManager: ObservableObject {
             }
             self.downloadTask = task
             self.progressObservation = task.progress.observe(\.fractionCompleted) { [weak self] progress, _ in
+                let now = Date()
+                let snapshot = progress.fractionCompleted
                 Task { @MainActor [weak self] in
-                    self?.downloadProgress = progress.fractionCompleted
+                    guard let self else { return }
+                    if snapshot >= 1.0 || now.timeIntervalSince(self.lastProgressUpdate) >= self.progressInterval {
+                        self.downloadProgress = snapshot
+                        self.lastProgressUpdate = now
+                    }
                 }
             }
             task.resume()

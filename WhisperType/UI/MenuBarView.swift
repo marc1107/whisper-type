@@ -25,6 +25,15 @@ struct MenuBarView: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
+            } else if appState.isPreparingModel {
+                Divider()
+                VStack(alignment: .leading, spacing: 4) {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                    Text(NSLocalizedString("status.preparing_model", comment: ""))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             } else if !appState.isModelLoaded {
                 Divider()
                 Button(String(format: NSLocalizedString("menu.download_model", comment: ""), appState.settings.selectedModel.displayName)) {
@@ -67,14 +76,19 @@ struct MenuBarView: View {
     private var statusText: String {
         switch appState.status {
         case .idle:
+            if appState.isPreparingModel {
+                return NSLocalizedString("status.preparing_model", comment: "")
+            }
             if appState.modelManager.isDownloading {
                 return NSLocalizedString("status.downloading_model", comment: "")
             }
             return appState.isModelLoaded
                 ? NSLocalizedString("status.ready", comment: "")
                 : NSLocalizedString("status.no_model", comment: "")
+        case .preparingModel: return NSLocalizedString("status.preparing_model", comment: "")
         case .recording: return NSLocalizedString("status.recording", comment: "")
         case .transcribing: return NSLocalizedString("status.transcribing", comment: "")
+        case .postProcessing: return NSLocalizedString("status.enhancing", comment: "")
         case .injecting: return NSLocalizedString("status.injecting", comment: "")
         case .error(let msg): return msg
         }
@@ -85,8 +99,10 @@ struct MenuBarView: View {
         case .idle:
             if appState.modelManager.isDownloading { return .orange }
             return appState.isModelLoaded ? .green : .orange
+        case .preparingModel: return .orange
         case .recording: return .red
         case .transcribing: return .orange
+        case .postProcessing: return .purple
         case .injecting: return .blue
         case .error: return .red
         }
