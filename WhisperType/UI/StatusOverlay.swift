@@ -8,12 +8,10 @@ final class OverlayWindowController {
     @MainActor
     func show(status: AppStatus) {
         if window == nil {
-            let contentView = OverlayContentView(status: status)
-            let hosting = NSHostingView(rootView: contentView)
-            hosting.frame = NSRect(x: 0, y: 0, width: 220, height: 44)
+            let hosting = NSHostingView(rootView: OverlayContentView(status: status))
 
             let w = NSWindow(
-                contentRect: hosting.frame,
+                contentRect: NSRect(origin: .zero, size: hosting.fittingSize),
                 styleMask: [.borderless],
                 backing: .buffered,
                 defer: false
@@ -26,19 +24,26 @@ final class OverlayWindowController {
             w.ignoresMouseEvents = true
             w.contentView = hosting
 
-            if let screen = NSScreen.main {
-                let screenFrame = screen.visibleFrame
-                let x = screenFrame.midX - 110
-                let y = screenFrame.maxY - 60
-                w.setFrameOrigin(NSPoint(x: x, y: y))
-            }
-
             self.window = w
             self.hostingView = hosting
         }
 
         hostingView?.rootView = OverlayContentView(status: status)
+        hostingView?.layoutSubtreeIfNeeded()
+        let fitting = hostingView?.fittingSize ?? NSSize(width: 220, height: 44)
+        window?.setContentSize(fitting)
+        repositionWindow(size: fitting)
         window?.orderFront(nil)
+    }
+
+    @MainActor
+    private func repositionWindow(size: NSSize) {
+        guard let window, let screen = NSScreen.main else { return }
+        let visible = screen.visibleFrame
+        let x = visible.midX - size.width / 2
+        let bottomInset: CGFloat = 80
+        let y = visible.minY + bottomInset
+        window.setFrameOrigin(NSPoint(x: x, y: y))
     }
 
     @MainActor

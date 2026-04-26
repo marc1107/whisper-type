@@ -1,7 +1,9 @@
+import AppKit
 import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var appState: AppState
+    @Environment(\.openSettings) private var openSettings
     @State private var didSetup = false
 
     var body: some View {
@@ -56,9 +58,10 @@ struct MenuBarView: View {
 
             Divider()
 
-            SettingsLink {
-                Text(NSLocalizedString("menu.settings", comment: ""))
+            Button(NSLocalizedString("menu.settings", comment: "")) {
+                openSettingsWindow()
             }
+            .keyboardShortcut(",", modifiers: .command)
 
             Button(NSLocalizedString("menu.quit", comment: "")) {
                 NSApplication.shared.terminate(nil)
@@ -105,6 +108,24 @@ struct MenuBarView: View {
         case .postProcessing: return .purple
         case .injecting: return .blue
         case .error: return .red
+        }
+    }
+
+    /// Opens the SwiftUI Settings scene and forces it to the foreground.
+    /// `SettingsLink` alone leaves the window behind other windows because
+    /// WhisperType runs as a menu-bar accessory — activate the app and bounce
+    /// the window's level so it lands on top.
+    private func openSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        openSettings()
+        DispatchQueue.main.async {
+            guard let window = NSApp.windows.first(where: {
+                $0.identifier?.rawValue.contains("Settings") == true
+            }) else { return }
+            window.level = .floating
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+            DispatchQueue.main.async { window.level = .normal }
         }
     }
 
