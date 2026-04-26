@@ -120,9 +120,7 @@ struct LLMRequestContext: Sendable {
     let provider: LLMProvider
 }
 
-final class LLMProcessor: @unchecked Sendable {
-    private let lock = NSLock()
-
+final class LLMProcessor: Sendable {
     func process(_ text: String, settings: AppSettings) async throws -> String {
         let context = LLMRequestContext(
             useDefaultPrompt: settings.llmUseDefaultPrompt,

@@ -6,6 +6,7 @@ struct AISettingsTab: View {
     @State private var apiKey: String = ""
     @State private var newFrom: String = ""
     @State private var newTo: String = ""
+    @State private var pullErrorMessage: String?
 
     var body: some View {
         Form {
@@ -106,10 +107,23 @@ struct AISettingsTab: View {
                     }
                 } else {
                     Button(NSLocalizedString("settings.ai.pull_model", comment: "")) {
-                        Task { try? await ollama.pullModel(settings.effectiveLLMModel) }
+                        pullErrorMessage = nil
+                        Task {
+                            do {
+                                try await ollama.pullModel(settings.effectiveLLMModel)
+                            } catch {
+                                pullErrorMessage = ollama.lastError ?? error.localizedDescription
+                            }
+                        }
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+
+                    if let pullErrorMessage {
+                        Text(pullErrorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
             }
         }
@@ -183,18 +197,20 @@ struct AISettingsTab: View {
                 TextField(NSLocalizedString("settings.ai.word_to", comment: ""), text: $newTo)
                     .textFieldStyle(.roundedBorder)
                 Button(NSLocalizedString("settings.ai.add_word_pair", comment: "")) {
-                    guard !newFrom.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                    let trimmedFrom = newFrom.trimmingCharacters(in: .whitespaces)
+                    let trimmedTo = newTo.trimmingCharacters(in: .whitespaces)
                     var entries = settings.llmDictionaryEntries
-                    entries.append(DictionaryEntry(
-                        from: newFrom.trimmingCharacters(in: .whitespaces),
-                        to: newTo.trimmingCharacters(in: .whitespaces)
-                    ))
+                    entries.append(DictionaryEntry(from: trimmedFrom, to: trimmedTo))
                     settings.llmDictionaryEntries = entries
                     newFrom = ""
                     newTo = ""
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .disabled(
+                    newFrom.trimmingCharacters(in: .whitespaces).isEmpty ||
+                    newTo.trimmingCharacters(in: .whitespaces).isEmpty
+                )
             }
         }
     }

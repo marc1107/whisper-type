@@ -53,12 +53,25 @@ final class LLMOllamaIntegrationTests: XCTestCase {
 
     private func skipIfModelMissing(_ model: String) async throws {
         let url = URL(string: "http://localhost:11434/api/tags")!
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 1.5
+        let session = URLSession(configuration: config)
         struct Tags: Decodable { struct Model: Decodable { let name: String }; let models: [Model] }
-        let tags = try JSONDecoder().decode(Tags.self, from: data)
-        let names = tags.models.map { $0.name }
-        guard names.contains(model) else {
-            throw XCTSkip("Ollama model '\(model)' not pulled — run `ollama pull \(model)`")
+
+        do {
+            let (data, response) = try await session.data(from: url)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                throw XCTSkip("Ollama not reachable on localhost:11434 — skipping integration tests")
+            }
+            let tags = try JSONDecoder().decode(Tags.self, from: data)
+            let names = tags.models.map { $0.name }
+            guard names.contains(model) else {
+                throw XCTSkip("Ollama model '\(model)' not pulled — run `ollama pull \(model)`")
+            }
+        } catch is XCTSkip {
+            throw XCTSkip("Ollama not reachable on localhost:11434")
+        } catch {
+            throw XCTSkip("Ollama not reachable on localhost:11434 (\(error.localizedDescription))")
         }
     }
 

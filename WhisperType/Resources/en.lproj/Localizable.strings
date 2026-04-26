@@ -78,7 +78,6 @@
 "settings.ai.provider" = "Provider";
 "settings.ai.api_key" = "API Key";
 "settings.ai.model_placeholder" = "Model (default: %@)";
-"settings.ai.ollama_hint" = "Ollama runs locally. Make sure Ollama is installed and running.";
 "settings.ai.section.prompt" = "Prompt";
 "settings.ai.use_default_prompt" = "Use built-in default prompt";
 "settings.ai.additional_instructions" = "Additional instructions:";

@@ -16,11 +16,19 @@ struct KeychainHelper {
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         if status == errSecSuccess {
             let attributes: [CFString: Any] = [kSecValueData: data]
-            SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-        } else {
+            let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+            if updateStatus != errSecSuccess {
+                NSLog("KeychainHelper.save: SecItemUpdate failed for key '%@' with status %d", key, updateStatus)
+            }
+        } else if status == errSecItemNotFound {
             var addQuery = query
             addQuery[kSecValueData] = data
-            SecItemAdd(addQuery as CFDictionary, nil)
+            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+            if addStatus != errSecSuccess {
+                NSLog("KeychainHelper.save: SecItemAdd failed for key '%@' with status %d", key, addStatus)
+            }
+        } else {
+            NSLog("KeychainHelper.save: SecItemCopyMatching failed for key '%@' with status %d", key, status)
         }
     }
 

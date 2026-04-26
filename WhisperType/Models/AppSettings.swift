@@ -31,12 +31,6 @@ enum TextInsertionMethod: String, CaseIterable {
     case typing = "typing"
 }
 
-enum ModelGroup: String {
-    case compact = "Compact"
-    case large = "Large"
-    case distil = "Distil (Optimized)"
-}
-
 enum WhisperModel: String, CaseIterable {
     case tiny = "ggml-tiny"
     case base = "ggml-base"
@@ -63,17 +57,6 @@ enum WhisperModel: String, CaseIterable {
         case .largeV3: return "Large v3 (2.9 GB)"
         case .distilLargeV3: return "Distil Large v3 (1.5 GB)"
         case .distilMediumEn: return "Distil Medium English-only (765 MB)"
-        }
-    }
-
-    var group: ModelGroup {
-        switch self {
-        case .tiny, .base, .small, .medium, .largeTurboQ5:
-            return .compact
-        case .largeTurbo, .largeV1, .largeV2, .largeV3:
-            return .large
-        case .distilLargeV3, .distilMediumEn:
-            return .distil
         }
     }
 
