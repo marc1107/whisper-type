@@ -41,3 +41,6 @@ WhisperType.xcodeproj/
 # Misc
 *.log
 *.tmp
+
+# Lsp Configuration
+buildServer.json

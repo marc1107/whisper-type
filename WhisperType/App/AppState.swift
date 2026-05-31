@@ -19,10 +19,11 @@ final class AppState: ObservableObject {
     @Published var isModelLoaded: Bool = false
     @Published var isPreparingModel: Bool = false
 
+    var modelManager = ModelManager()
+
     let settings = AppSettings.shared
     let audioRecorder = AudioRecorder()
     let whisperEngine = WhisperEngine()
-    let modelManager = ModelManager()
     let hotkeyManager = HotkeyManager()
     let overlayController = OverlayWindowController()
     let llmProcessor = LLMProcessor()
@@ -33,6 +34,16 @@ final class AppState: ObservableObject {
     private var modelLoadTask: Task<Void, Never>?
 
     var isRecording: Bool { status == .recording }
+
+    init() {
+        self.modelManager = ModelManager()
+
+        modelManager.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+    }
 
     func setup() {
         hotkeyManager.onHotkeyDown = { [weak self] in
